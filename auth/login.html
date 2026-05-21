@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="eng">
+
+<head>
+  <title>Log In Technilog</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="../stylesheet/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <style>
+    .or-divider {
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+      margin: 0.5rem 0;
+    }
+
+    .or-divider::before,
+    .or-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: rgba(255, 255, 255, 0.25);
+    }
+
+    .or-divider span {
+      color: rgba(255, 255, 255, 0.55);
+      font-size: .8rem;
+      white-space: nowrap;
+    }
+
+    .google-btn {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: .6rem;
+      padding: .55rem 1rem;
+      border-radius: .5rem;
+      border: none;
+      background: #fff;
+      color: #3c4043;
+      font-size: .9rem;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 1px 6px rgba(0, 0, 0, .18);
+      transition: box-shadow .2s, background .2s;
+    }
+
+    .google-btn:hover {
+      background: #f7f7f7;
+      box-shadow: 0 3px 10px rgba(0, 0, 0, .22);
+    }
+
+    .google-btn img {
+      width: 20px;
+      height: 20px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="page-wrapper min-h-screen flex items-center justify-center bg-gray-50">
+    <div class="w-full max-w-md mx-4 p-5 rounded-2xl shadow-xl text-white"
+      style="background-color: var(--color-secondary);">
+
+      <!-- LOGO -->
+      <div class="flex flex-col items-center mb-4">
+        <img src="../image/logo.png" class="h-16 w-16 rounded-full mb-2 shadow-lg" alt="Logo"
+          onerror="this.style.display='none'">
+        <h1 class="text-2xl font-bold tracking-wide">TECHNILOG</h1>
+        <p class="text-sm mt-1 text-white/70">Log in to your account</p>
+      </div>
+
+      <!-- MESSAGE BOX -->
+      <div id="msgBox" class="text-center text-sm rounded-lg"
+        style="display:none;margin-bottom:0.75rem;padding:0.5rem 0.75rem;"></div>
+
+      <!-- EMAIL -->
+      <div class="mb-3">
+        <label class="block text-sm mb-1 text-white/80">Email</label>
+        <input id="loginEmail" type="email" placeholder="Enter your email"
+          class="w-full px-4 py-2 rounded-lg text-black outline-none focus:ring-2 focus:ring-white/40" required>
+      </div>
+
+      <!-- PASSWORD -->
+      <div class="mb-3">
+        <label class="block text-sm mb-1 text-white/80">Password</label>
+        <div class="pwd-wrap">
+          <input id="loginPassword" type="password" placeholder="Enter your password"
+            class="w-full px-4 py-2 pr-10 rounded-lg text-black outline-none focus:ring-2 focus:ring-white/40" required>
+          <i id="togglePassword" class="fa-solid fa-eye toggle-eye" style="color: black;"></i>
+        </div>
+      </div>
+
+      <!-- FORGOT PASSWORD -->
+      <div class="text-left mb-3">
+        <a href="forgotpass.html" class="text-sm text-white/75 hover:text-white hover:underline transition">Forgot
+          Password?</a>
+      </div>
+
+      <!-- LOGIN BUTTON -->
+      <button id="loginBtn"
+        class="w-full py-2 rounded-lg font-semibold bg-white text-black hover:bg-gray-100 transition mb-3 shadow">
+        Log In
+      </button>
+
+      <!-- GOOGLE SIGN-IN -->
+      <div class="or-divider"><span>or continue with</span></div>
+      <button class="google-btn" onclick="triggerGoogleLogin()">
+        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
+        Sign in with Google
+      </button>
+      <div id="googleBtnContainer" style="display:none;"></div>
+
+      <!-- SIGN UP LINK -->
+      <p class="text-center text-sm text-white/80">
+        Don't have an account?
+        <a href="signup.html" class="font-semibold text-white hover:underline transition">Sign Up</a>
+      </p>
+
+      <!-- BACK TO HOME -->
+      <p class="text-center mt-2">
+        <button id="backBtn" class="text-white/60 hover:text-white transition text-sm">
+          <i class="fas fa-arrow-left mr-1"></i>Back to Home
+        </button>
+      </p>
+
+      <div class="text-center text-xs mt-4 text-white/40">© 2026 TECHNILOG. All rights reserved.</div>
+    </div>
+  </div>
+
+  <script src="../js/workLogin.js"></script>
+  <script src="../js/account.js"></script>
+
+  <!-- Google initialized on button click only -->
+
+  <script>
+    const GOOGLE_CLIENT_ID = '1019348410923-vs99rj7j6vq2d1jft3q4enfsc3o9c93g.apps.googleusercontent.com';
+    let googleInitialized = false;
+
+    function getBase() {
+      return window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
+    }
+
+    function ensureGoogleInit() {
+      if (googleInitialized) return;
+      google.accounts.id.initialize({
+        client_id: GOOGLE_CLIENT_ID,
+        callback: handleGoogleCredential,
+        ux_mode: 'popup',
+        use_fedcm_for_prompt: false,
+        cancel_on_tap_outside: false
+      });
+      googleInitialized = true;
+    }
+
+    function triggerGoogleLogin() {
+      const btn = document.querySelector('.google-btn');
+
+      // If Google GSI library hasn't loaded yet, show error
+      if (typeof google === 'undefined' || !google.accounts) {
+        showGoogleError('Google sign-in is still loading. Please wait a moment and try again.', btn);
+        return;
+      }
+
+      ensureGoogleInit();
+
+      // Use renderButton inside the hidden container, then programmatically click it
+      // This is more reliable than google.accounts.id.prompt() on ngrok/tunneled URLs
+      const container = document.getElementById('googleBtnContainer');
+      container.innerHTML = '';
+      container.style.display = 'block';
+
+      google.accounts.id.renderButton(container, {
+        theme: 'outline',
+        size: 'large',
+        width: 360,
+        text: 'signin_with',
+        type: 'standard'
+      });
+
+      // Wait for the iframe/button to render, then click it
+      let attempts = 0;
+      const maxAttempts = 20;
+      const interval = setInterval(() => {
+        attempts++;
+        // The rendered Google button is inside an iframe — find and click the wrapping div
+        const gBtn = container.querySelector('div[role="button"]');
+        if (gBtn) {
+          clearInterval(interval);
+          gBtn.click();
+          container.style.display = 'none';
+          container.innerHTML = '';
+        } else if (attempts >= maxAttempts) {
+          clearInterval(interval);
+          // Fallback: try the One Tap prompt directly
+          google.accounts.id.prompt((notification) => {
+            if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+              showGoogleError(
+                'Popup was blocked. Please allow popups for this site and try again.',
+                document.querySelector('.google-btn')
+              );
+            }
+          });
+          container.style.display = 'none';
+          container.innerHTML = '';
+        }
+      }, 100);
+    }
+
+    async function handleGoogleCredential(response) {
+      const btn = document.querySelector('.google-btn');
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing in…';
+      }
+
+      const base = getBase();
+      const backendUrl = base + 'google_login.php';
+
+      try {
+        const res = await fetch(backendUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'ngrok-skip-browser-warning': '1',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify({ token: response.credential })
+        });
+
+        // Check if response is OK before parsing JSON
+        if (!res.ok) {
+          const text = await res.text();
+          console.error('Server error response:', text);
+          showGoogleError('Server error (' + res.status + '). Please try again.', btn);
+          return;
+        }
+
+        // Guard against non-JSON response (e.g. ngrok warning HTML page)
+        const contentType = res.headers.get('content-type') || '';
+        if (!contentType.includes('application/json')) {
+          const text = await res.text();
+          console.error('Non-JSON response received:', text.substring(0, 300));
+          showGoogleError('Unexpected server response. If using ngrok, make sure to bypass the browser warning page first.', btn);
+          return;
+        }
+
+        const data = await res.json();
+
+        if (data.success) {
+          localStorage.removeItem('tl_return_to');
+          localStorage.removeItem('tl_pending_action');
+          localStorage.setItem('tl_logged_in', 'true');
+          localStorage.setItem('tl_user_email', data.email || '');
+          localStorage.setItem('tl_name', data.username || '');
+          localStorage.setItem('tl_role', data.role || 'user');
+          localStorage.setItem('tl_user_id', String(data.id || ''));
+          window.location.replace(base + '../frontend/main.html');
+        } else {
+          showGoogleError(data.message || 'Google login failed.', btn);
+        }
+      } catch (e) {
+        console.error('Google login fetch error:', e);
+        // More descriptive error to help diagnose
+        if (e instanceof TypeError && e.message.includes('fetch')) {
+          showGoogleError('Cannot reach server. Check your internet connection or ngrok tunnel.', btn);
+        } else {
+          showGoogleError('Could not reach server. Please try again. (' + e.message + ')', btn);
+        }
+      }
+    }
+
+    function showGoogleError(msg, btn) {
+      const box = document.getElementById('msgBox');
+      box.textContent = msg;
+      box.style.display = 'block';
+      box.className = 'text-center text-sm rounded-lg bg-red-500/20 text-red-100';
+      box.style.marginBottom = '0.75rem';
+      box.style.padding = '0.5rem 0.75rem';
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = '<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width:20px;height:20px;"> Sign in with Google';
+      }
+    }
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,17 @@
+{
+    "name": "ronlo/technilog",
+    "autoload": {
+        "psr-4": {
+            "Ronlo\\Technilog\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "ronmalakasmagyearn018",
+            "email": "ronlouiemagsipoc210@gmail.com"
+        }
+    ],
+    "require": {
+        "phpoffice/phpspreadsheet": "^5.7"
+    }
+}

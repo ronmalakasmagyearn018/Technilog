@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="eng">
+<head>
+  <title>Technilog</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="../stylesheet/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <style>
+    /* Product card */
+    .product-card {
+      background:#fff; border-radius:16px; overflow:hidden;
+      box-shadow:0 2px 12px rgba(0,0,0,0.07);
+      transition: transform 0.25s, box-shadow 0.25s;
+      cursor:pointer; display:flex; flex-direction:column;
+    }
+    .product-card:hover { transform:translateY(-5px); box-shadow:0 10px 28px rgba(46,39,157,0.18); }
+
+    .product-card-img { width:100%; height:130px; object-fit:cover; background:#e5e7eb; }
+    .product-card-img-placeholder { width:100%; height:130px; display:flex; align-items:center; justify-content:center; background:#f3f4f6; color:#9ca3af; font-size:2rem; }
+    .product-card-body { padding:0.6rem; flex:1; display:flex; flex-direction:column; }
+    .product-card-cat { font-size:0.65rem; font-weight:600; letter-spacing:1px; text-transform:uppercase; color:var(--color-secondary); margin-bottom:3px; }
+    .product-card-name { font-weight:700; color:#1f2937; font-size:0.8rem; margin-bottom:4px; }
+    .product-card-desc { font-size:0.72rem; color:#6b7280; flex:1; line-height:1.4; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+    .product-card-price { font-size:0.85rem; font-weight:700; color:var(--color-primary); margin-top:6px; }
+    .product-card-status { display:inline-block; font-size:0.65rem; font-weight:600; padding:2px 8px; border-radius:99px; margin-top:4px; }
+    .status-available { background:#d1fae5; color:#065f46; }
+    .status-out       { background:#fee2e2; color:#991b1b; }
+    .status-soon      { background:#fef3c7; color:#92400e; }
+    .product-card-footer { padding:0 0.6rem 0.6rem; }
+    .btn-view { width:100%; padding:6px; background:var(--color-primary); color:#fff; border:none; border-radius:10px; font-weight:600; font-size:0.8rem; cursor:pointer; transition:opacity 0.2s; }
+    .btn-view:hover { opacity:0.88; }
+
+    /* Products grid */
+    #productsGrid { display:grid; grid-template-columns:repeat(2,1fr); gap:0.75rem; }
+    #noProducts { text-align:center; color:#9ca3af; padding:3rem 0; }
+
+    /* Desktop overrides */
+    @media (min-width: 640px) {
+      .product-card-img { height:200px; }
+      .product-card-img-placeholder { height:200px; font-size:2.5rem; }
+      .product-card-body { padding:1rem; }
+      .product-card-cat { font-size:0.72rem; }
+      .product-card-name { font-size:1rem; margin-bottom:6px; }
+      .product-card-desc { font-size:0.82rem; -webkit-line-clamp:unset; overflow:visible; }
+      .product-card-price { font-size:1.05rem; margin-top:10px; }
+      .product-card-status { font-size:0.72rem; padding:2px 10px; margin-top:6px; }
+      .product-card-footer { padding:0 1rem 1rem; }
+      .btn-view { padding:8px; font-size:0.9rem; }
+      #productsGrid { grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:1.3rem; }
+    }
+  </style>
+</head>
+<body id="home">
+<div class="h-[108px] md:h-[90px]"></div>
+
+<!-- ═══════ HEADER ═══════ -->
+<header id="mainHeader" class="fixed top-0 left-0 w-full z-50 shadow-md transition-all duration-300" style="background-color: var(--color-primary); overflow: visible;">
+  <div id="headerInner" class="max-w-7xl mx-auto flex items-center h-[64px] md:h-[90px] px-3 md:px-4 transition-all duration-300" style="overflow:visible;">
+    <a href="" class="flex items-center gap-2 group cursor-pointer transition duration-300 flex-shrink-0">
+      <img id="logo" src="../image/logo.png" alt="Logo" class="h-10 md:h-20 rounded-full transition duration-300 group-hover:scale-110 group-hover:rotate-3">
+      <span id="brandText" class="text-white font-bold text-base md:text-3xl tracking-wide transition duration-300">TECHNILOG</span>
+    </a>
+    <div class="hidden md:flex flex-1 mx-6 relative ml-auto md:ml-6" id="mainSearchWrap">
+      <div class="flex items-center w-full bg-white rounded-lg">
+        <input id="searchBar" type="text" placeholder="Search products..." autocomplete="off"
+          class="flex-1 px-4 py-2 rounded-l-lg outline-none bg-white text-black text-sm"
+          oninput="mainSearchSuggest(this.value)"
+          onkeydown="if(event.key==='Enter'){mainSearchGo();}">
+        <button onclick="mainSearchGo()" class="px-3 py-2 text-gray-400 hover:text-blue-600 transition bg-white rounded-r-lg">
+          <i class="fas fa-search"></i>
+        </button>
+      </div>
+      <div id="mainSuggestBox" style="position:absolute;top:calc(100% + 6px);left:0;right:0;background:#fff;border-radius:12px;box-shadow:0 8px 32px rgba(46,39,157,0.18);z-index:9999;overflow:hidden;display:none;"></div>
+    </div>
+    <nav id="navMenu" class="hidden md:flex space-x-6 text-white flex-shrink-0 mr-8">
+      <a href="#home" class="hover:text-[var(--color-tertiary)]">Home</a>
+      <a href="#about" class="hover:text-[var(--color-tertiary)]">About Us</a>
+      <a href="#contact" class="hover:text-[var(--color-tertiary)]">Contact Us</a>
+    </nav>
+    <div class="flex items-center gap-2 flex-shrink-0 ml-auto md:ml-6">
+      <button id="menu-btn" class="text-white text-xl cursor-pointer relative">
+        <i class="fas fa-bars"></i>
+        <span id="menuTotalBadge" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs px-1 py-0.5 rounded-full" style="display:none;">0</span>
+      </button>
+      <div id="userIcon" onclick="openAvatarModal()" class="cursor-pointer hover:opacity-80 transition" title="View Profile">
+        <img id="headerAvatar" src="https://ui-avatars.com/api/?name=U&background=4D80E4&color=fff&size=80" class="w-9 h-9 rounded-full object-cover border-2 border-white/50">
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE NAV -->
+  <div id="mobile-menu" class="fixed top-0 right-[-100%] w-64 h-full shadow-lg transition-all duration-300 z-50 p-5" style="background-color: var(--color-primary);">
+    <div class="flex justify-end">
+      <button id="close-btn" class="text-white text-2xl cursor-pointer"><i class="fas fa-times"></i></button>
+    </div>
+    <!-- User profile block -->
+    <div class="flex items-center gap-3 mt-4 mb-2 pb-4 border-b border-white/20">
+      <img id="sidebarAvatar" src="https://ui-avatars.com/api/?name=U&background=4D80E4&color=fff&size=80" class="w-12 h-12 rounded-full object-cover border-2 border-white/40">
+      <div>
+        <p id="sidebarName" class="text-white font-bold text-sm leading-tight">User</p>
+        <p id="sidebarEmail" class="text-white/50 text-xs truncate max-w-[150px]"></p>
+      </div>
+    </div>
+    <nav class="mt-2 flex flex-col space-y-5 text-white text-lg">
+      <div class="text-sm tracking-widest text-white font-semibold border-b border-white/30 pb-2 opacity-80">SECTIONS</div>
+      <a href="#home" class="flex items-center gap-3 group transition duration-300"><i class="fas fa-home"></i><span class="relative group-hover:text-[var(--color-tertiary)]">Home</span></a>
+      <a id="menuAccountLink" href="#" onclick="handleAccountClick(event)" class="flex items-center gap-3 group transition duration-300"><i class="fas fa-user"></i><span class="relative group-hover:text-[var(--color-tertiary)]">Account</span></a>
+      <a href="#" onclick="requireLoginNav(event,'device.html')" class="flex items-center gap-3 group transition duration-300 justify-between"><div class="flex items-center gap-3"><i class="fas fa-laptop"></i><span class="relative group-hover:text-[var(--color-tertiary)]">My Device</span></div><span id="badge-device" class="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full min-w-[20px] text-center" style="display:none;">0</span></a>
+      <a href="#" onclick="requireLoginNav(event,'deviceHistory.html')" class="flex items-center gap-3 group transition duration-300 justify-between"><div class="flex items-center gap-3"><i class="fas fa-history"></i><span class="relative group-hover:text-[var(--color-tertiary)]">Device History</span></div><span id="badge-history" class="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full min-w-[20px] text-center" style="display:none;">0</span></a>
+      <a href="#" onclick="requireLoginNav(event,'forum.html')" class="flex items-center gap-3 group transition duration-300 justify-between"><div class="flex items-center gap-3"><i class="fas fa-users"></i><span class="relative group-hover:text-[var(--color-tertiary)]">Forum</span></div><span id="badge-forum" class="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full min-w-[20px] text-center" style="display:none;">0</span></a>
+      <a href="#" onclick="requireLoginNav(event,'deliveries.html')" class="flex items-center gap-3 group transition duration-300 justify-between"><div class="flex items-center gap-3"><i class="fas fa-receipt"></i><span class="relative group-hover:text-[var(--color-tertiary)]">Orders</span></div><span id="badge-orders" class="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full min-w-[20px] text-center" style="display:none;">0</span></a>
+      <a href="#" onclick="goToMessages(event)" class="flex items-center gap-3 group transition duration-300 justify-between"><div class="flex items-center gap-3"><i class="fas fa-envelope"></i><span class="relative group-hover:text-[var(--color-tertiary)]">Messages</span></div><span id="badge-messages" class="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full min-w-[20px] text-center" style="display:none;">0</span></a>
+      <a href="#" onclick="requireLoginNav(event,'cart.html')" class="flex items-center gap-3 group transition duration-300 justify-between"><div class="flex items-center gap-3"><i class="fas fa-shopping-cart"></i><span class="relative group-hover:text-[var(--color-tertiary)]">Cart</span></div><span id="badge-cart" class="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full min-w-[20px] text-center" style="display:none;">0</span></a>
+      <a id="adminMenuLink" href="../auth/admin-login.html" class="flex items-center gap-3 group transition duration-300" style="display:none;"><i class="fas fa-shield-halved"></i><span class="relative group-hover:text-[var(--color-tertiary)]">Admin</span></a>
+    </nav>
+  </div>
+</header>
+
+</div>
+
+<!-- MOBILE SEARCH BAR (scrolls with page) -->
+<div class="md:hidden px-3 py-2" style="background-color:var(--color-primary);">
+  <div class="flex items-center w-full bg-white rounded-xl overflow-hidden shadow-sm">
+    <input id="searchBarMobile" type="text" placeholder="Search products..." autocomplete="off"
+      class="flex-1 px-3 py-2 outline-none bg-white text-black text-sm min-w-0"
+      onkeydown="if(event.key==='Enter'){mainSearchGoMobile();}">
+    <button onclick="mainSearchGoMobile()" class="px-4 py-2 text-gray-400 flex-shrink-0 bg-white">
+      <i class="fas fa-search"></i>
+    </button>
+  </div>
+</div>
+
+<!-- HERO -->
+<div class="flex flex-col md:flex-row items-center justify-center px-3 md:px-6 py-3 md:py-6 gap-2 md:gap-3">
+  <div class="w-full md:w-[70%]">
+    <div class="relative w-full h-[200px] md:h-[380px] overflow-hidden rounded-xl shadow-lg">
+      <img id="slider1" src="../image/width_smartcamera.png" class="absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 opacity-100">
+      <img id="slider2" src="../image/promotion1.png" class="absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 opacity-0">
+    </div>
+  </div>
+  <div class="w-full md:w-[30%]">
+    <img src="../image/smartfire.png" class="w-full h-[160px] md:h-[380px] object-cover rounded-xl shadow-lg">
+  </div>
+</div>
+
+<!-- PRODUCTS -->
+<div class="mt-8 md:mt-16 px-3 md:px-6">
+  <div class="flex justify-center mb-5 md:mb-8">
+    <h2 class="w-[95%] md:w-[90%] text-center py-2 md:py-3 rounded-sm text-white text-xl md:text-3xl font-bold tracking-widest bg-[var(--color-secondary)] shadow-lg opacity-0 translate-y-10 transition-all duration-700 reveal italic">PRODUCTS</h2>
+  </div>
+  <div id="productsGrid">
+    <!-- loaded dynamically -->
+    <div id="noProducts" style="grid-column:1/-1;" class="hidden">
+      <i class="fas fa-box-open text-4xl mb-3 block"></i>
+      <p>No products available yet. Check back soon!</p>
+    </div>
+  </div>
+</div>
+
+<!-- ABOUT US -->
+<div id="about" class="mt-10 md:mt-16 px-3 md:px-6">
+  <div class="flex justify-center mb-8">
+    <h2 class="w-[95%] md:w-[90%] text-center py-2 md:py-3 rounded-sm text-white text-xl md:text-3xl font-bold tracking-widest bg-[var(--color-secondary)] shadow-lg opacity-0 translate-y-10 transition-all duration-700 reveal italic">ABOUT US</h2>
+  </div>
+  <div class="max-w-5xl mx-auto text-center mb-12 opacity-0 translate-y-10 transition-all duration-700 reveal">
+    <p class="text-gray-700 text-sm md:text-lg leading-relaxed">
+      <span class="font-bold text-[var(--color-primary)]">TECHNILOG</span> is a trusted provider of advanced security solutions specializing in high-quality CCTV surveillance systems and smart fire alarm technologies. Our goal is to protect homes, businesses, and communities by delivering reliable, intelligent, and easy-to-use safety systems.
+    </p>
+  </div>
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+    <div class="border-l-4 border-[var(--color-secondary)] pl-4 opacity-0 translate-y-10 transition-all duration-700 reveal"><h3 class="font-bold text-lg mb-2">Smart Security</h3><p class="text-gray-600 text-sm">Intelligent CCTV systems with real-time monitoring, mobile access, and HD recording.</p></div>
+    <div class="border-l-4 border-[var(--color-secondary)] pl-4 opacity-0 translate-y-10 transition-all duration-700 reveal"><h3 class="font-bold text-lg mb-2">Reliable Technology</h3><p class="text-gray-600 text-sm">Durable, modern components ensuring long-lasting performance in every environment.</p></div>
+    <div class="border-l-4 border-[var(--color-secondary)] pl-4 opacity-0 translate-y-10 transition-all duration-700 reveal"><h3 class="font-bold text-lg mb-2">Fire Safety Solutions</h3><p class="text-gray-600 text-sm">Smart fire alarm systems detecting smoke and heat instantly to prevent damage.</p></div>
+    <div class="border-l-4 border-[var(--color-secondary)] pl-4 opacity-0 translate-y-10 transition-all duration-700 reveal"><h3 class="font-bold text-lg mb-2">Customer Focus</h3><p class="text-gray-600 text-sm">Every solution is tailored, easy to use, and backed by excellent support.</p></div>
+    <div class="border-l-4 border-[var(--color-secondary)] pl-4 opacity-0 translate-y-10 transition-all duration-700 reveal"><h3 class="font-bold text-lg mb-2">Innovation</h3><p class="text-gray-600 text-sm">Continuously integrating the latest advancements in security and smart technology.</p></div>
+    <div class="border-l-4 border-[var(--color-secondary)] pl-4 opacity-0 translate-y-10 transition-all duration-700 reveal"><h3 class="font-bold text-lg mb-2">Trusted Protection</h3><p class="text-gray-600 text-sm">Security solutions that safeguard lives, properties, and businesses with confidence.</p></div>
+  </div>
+  <div class="flex justify-center mt-12">
+    <div class="w-full md:w-[60%] h-[200px] md:h-[300px] rounded-xl overflow-hidden shadow-lg opacity-0 translate-y-10 transition-all duration-700 reveal">
+      <iframe class="w-full h-full" src="https://www.google.com/maps?q=Morong,Rizal&output=embed" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
+    </div>
+  </div>
+</div>
+
+<!-- CONTACT US -->
+<div id="contact" class="mt-10 md:mt-16 px-3 md:px-6">
+  <div class="flex justify-center mb-8">
+    <h2 class="w-[95%] md:w-[90%] text-center py-2 md:py-3 rounded-sm text-white text-xl md:text-3xl font-bold tracking-widest bg-[var(--color-secondary)] shadow-lg opacity-0 translate-y-10 transition-all duration-700 reveal italic">CONTACT US</h2>
+  </div>
+
+  <!-- Shown when NOT logged in -->
+  <div id="contactGuest" class="max-w-2xl mx-auto bg-white shadow-lg rounded-xl p-8 text-center opacity-0 translate-y-10 transition-all duration-700 reveal" style="display:none;">
+    <div class="text-[var(--color-primary)] text-5xl mb-4"><i class="fas fa-lock"></i></div>
+    <h3 class="text-xl font-bold mb-3 text-gray-800">Login Required</h3>
+    <p class="text-gray-600 mb-6">Please log in to your account to send inquiries or request support.</p>
+    <button id="contactLoginBtn" class="inline-block px-6 py-2 rounded-lg text-black font-semibold shadow-md transition hover:opacity-90" style="background-color: var(--color-quarternary);">
+      Log In to Contact Us
+    </button>
+  </div>
+
+  <!-- Shown when logged in -->
+  <div id="contactForm" class="max-w-2xl mx-auto bg-white shadow-lg rounded-xl p-8 opacity-0 translate-y-10 transition-all duration-700 reveal" style="display:none;">
+    <div class="text-[var(--color-primary)] text-5xl mb-4 text-center"><i class="fas fa-envelope-open-text"></i></div>
+    <h3 class="text-xl font-bold mb-1 text-gray-800 text-center">Send Us a Message</h3>
+    <p class="text-gray-500 text-sm text-center mb-6">We'll get back to you as soon as possible.</p>
+    <div id="contactAlert" class="hidden mb-4 px-4 py-3 rounded-lg text-sm font-medium"></div>
+    <div class="mb-4">
+      <label class="block text-sm font-semibold text-gray-700 mb-1">Email</label>
+      <input id="contactEmail" type="email" class="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]" placeholder="your@email.com">
+    </div>
+    <div class="mb-4">
+      <label class="block text-sm font-semibold text-gray-700 mb-1">Subject</label>
+      <input id="contactSubject" type="text" class="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]" placeholder="What is this about?">
+    </div>
+    <div class="mb-6">
+      <label class="block text-sm font-semibold text-gray-700 mb-1">Message</label>
+      <textarea id="contactMessage" rows="5" class="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]" placeholder="Write your message here..."></textarea>
+    </div>
+    <button id="contactSubmitBtn" onclick="submitContact()" class="w-full py-2 rounded-lg text-black font-semibold shadow-md transition hover:opacity-90" style="background-color: var(--color-quarternary);">
+      Send Message
+    </button>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer class="mt-10 py-4 px-4" style="background-color: var(--color-primary);">
+  <div class="flex flex-col md:flex-row items-center justify-between gap-3">
+    <div class="hidden md:block md:w-1/3"></div>
+    <div class="text-center text-xs text-white/80">© 2026 TECHNILOG. All rights reserved.</div>
+    <div class="flex justify-center md:justify-end gap-5 md:w-1/3">
+      <a href="https://facebook.com" target="_blank" class="text-xl text-white hover:text-[var(--color-tertiary)] transition"><i class="fa-brands fa-facebook"></i></a>
+      <a href="https://instagram.com" target="_blank" class="text-xl text-white hover:text-[var(--color-tertiary)] transition"><i class="fa-brands fa-instagram"></i></a>
+      <a href="https://tiktok.com" target="_blank" class="text-xl text-white hover:text-[var(--color-tertiary)] transition"><i class="fa-brands fa-tiktok"></i></a>
+    </div>
+  </div>
+</footer>
+
+<script src="../js/imageslider.js"></script>
+<script src="../js/menu.js"></script>
+<script src="../js/reveal.js"></script>
+<script src="../js/headerScroll.js"></script>
+<script src="../js/userIcon.js"></script>
+<script>
+// ── Load products from backend ─────────────────────────────────
+let allProducts = [];
+
+async function loadProducts() {
+  const grid = document.getElementById('productsGrid');
+  try {
+    const res  = await fetch('../backend/get_products.php');
+    allProducts = await res.json();
+    renderProducts(allProducts);
+  } catch(e) {
+    grid.innerHTML = '<p class="text-gray-400 text-center py-10 col-span-full">Could not load products.</p>';
+  }
+}
+
+function renderProducts(products) {
+  const grid     = document.getElementById('productsGrid');
+  const noProd   = document.getElementById('noProducts');
+  const available = products.filter(p => p.status === 'Available');
+
+  if (!available.length) {
+    grid.innerHTML = '';
+    noProd.classList.remove('hidden');
+    return;
+  }
+  noProd.classList.add('hidden');
+
+  grid.innerHTML = available.map(p => {
+    const img   = p.images?.[0] || '';
+    const price = p.prices?.[0]?.price ?? 0;
+    // Compute total stock across all variants
+    const totalStock = (p.prices || []).reduce((sum, pr) => sum + (parseInt(pr.stock) || 0), 0);
+    let stockBadge;
+    if (totalStock === 0)     stockBadge = `<span class="product-card-status" style="background:#fee2e2;color:#dc2626;">Out of Stock</span>`;
+    else if (totalStock <= 5) stockBadge = `<span class="product-card-status" style="background:#fef9c3;color:#b45309;">Low Stock (${totalStock} left)</span>`;
+    else                      stockBadge = `<span class="product-card-status status-available">In Stock (${totalStock})</span>`;
+    return `
+    <div class="product-card reveal-card" onclick="goToProduct(${p.id})" style="opacity:0;transform:translateY(20px);transition:opacity 0.5s ease,transform 0.5s ease;">
+      ${img
+        ? `<img class="product-card-img" src="${img}" alt="${p.name}">`
+        : `<div class="product-card-img-placeholder"><i class="fas fa-image"></i></div>`}
+      <div class="product-card-body">
+        <div class="product-card-cat">${p.category}</div>
+        <div class="product-card-name">${p.name}</div>
+        <div class="product-card-desc">${p.description?.substring(0,90)}${p.description?.length>90?'…':''}</div>
+        <div class="product-card-price">₱${parseFloat(price).toLocaleString('en-PH',{minimumFractionDigits:2})}</div>
+        ${stockBadge}
+      </div>
+      <div class="product-card-footer">
+        <button class="btn-view">View Details</button>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Animate product cards in as they enter viewport
+  setTimeout(() => {
+    const cards = document.querySelectorAll('.reveal-card');
+    if ('IntersectionObserver' in window) {
+      const obs = new IntersectionObserver((entries) => {
+        entries.forEach((entry, i) => {
+          if (entry.isIntersecting) {
+            setTimeout(() => {
+              entry.target.style.opacity = '1';
+              entry.target.style.transform = 'translateY(0)';
+            }, i * 80);
+            obs.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.1 });
+      cards.forEach(c => obs.observe(c));
+    } else {
+      cards.forEach(c => { c.style.opacity='1'; c.style.transform='translateY(0)'; });
+    }
+  }, 100);
+}
+
+function filterProducts(query) {
+  const q = query.toLowerCase();
+  const filtered = allProducts.filter(p =>
+    p.name.toLowerCase().includes(q) ||
+    p.category.toLowerCase().includes(q) ||
+    p.description?.toLowerCase().includes(q)
+  );
+  renderProducts(filtered);
+}
+
+function goToProduct(id) {
+  window.location.href = `product.html?id=${id}`;
+}
+
+// Search: redirect to search.html
+function mainSearchGo() {
+  const q = document.getElementById("searchBar")?.value?.trim() || "";
+  if (q) window.location.href = `search.html?q=${encodeURIComponent(q)}`;
+}
+function mainSearchGoMobile() {
+  const q = document.getElementById("searchBarMobile")?.value?.trim() || "";
+  if (q) window.location.href = `search.html?q=${encodeURIComponent(q)}`;
+}
+
+// Live suggestion dropdown on main page
+let _sugTimer = null, _sugLast = "";
+function escH2(s) { return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+function mainSearchSuggest(val) {
+  clearTimeout(_sugTimer);
+  const box = document.getElementById("mainSuggestBox"); if(!box) return;
+  if (!val.trim()) { box.style.display="none"; box.innerHTML=""; _sugLast=""; return; }
+  _sugTimer = setTimeout(async () => {
+    if (val === _sugLast) return;
+    _sugLast = val;
+    try {
+      const base = window.location.pathname.replace(/\/frontend\/[^/]*$/, '');
+      const res  = await fetch(base + '/backend/search_products.php?mode=suggest&q=' + encodeURIComponent(val));
+      const data = await res.json();
+      if (!data.success || !data.data.length) {
+        box.innerHTML = `<div style="padding:12px 14px;display:flex;align-items:center;gap:10px;color:#9ca3af;font-size:.83rem;"><i class="fas fa-search"></i>&nbsp;No products found for "<strong>${escH2(val)}</strong>"</div>`;
+        box.style.display = "block";
+        return;
+      }
+      const rows = data.data.map(p => {
+        const img = p.image
+          ? `<img src="${escH2(p.image)}" style="width:38px;height:38px;border-radius:7px;object-fit:cover;flex-shrink:0;" onerror="this.style.display='none'">`
+          : `<div style="width:38px;height:38px;border-radius:7px;background:#e5e7eb;display:flex;align-items:center;justify-content:center;color:#9ca3af;flex-shrink:0;font-size:.85rem;"><i class="fas fa-image"></i></div>`;
+        const price = p.min_price ? "\u20b1" + parseFloat(p.min_price).toLocaleString("en-PH",{minimumFractionDigits:2}) : "";
+        return `<div onclick="goToProduct(${p.id})" style="display:flex;align-items:center;gap:11px;padding:9px 13px;cursor:pointer;border-bottom:1px solid #f1f5f9;transition:background .14s;" onmouseover="this.style.background='#f0f4ff'" onmouseout="this.style.background='#fff'">` + img + `<div style="flex:1;min-width:0;"><div style="font-size:.84rem;font-weight:700;color:#1f2937;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escH2(p.name)}</div><div style="font-size:.71rem;color:#6b7280;">${escH2(p.category)}</div></div>` + (price ? `<div style="font-size:.81rem;font-weight:700;color:#2E279D;flex-shrink:0;">${price}</div>` : "") + `</div>`;
+      }).join("");
+      const footer = `<div onclick="mainSearchGo()" style="padding:9px 14px;background:#f8faff;font-size:.8rem;color:#4D80E4;font-weight:700;cursor:pointer;text-align:center;" onmouseover="this.style.background='#ede9fe'" onmouseout="this.style.background='#f8faff'"><i class="fas fa-search" style="margin-right:4px;"></i>See all results for "<strong>${escH2(val)}</strong>"</div>`;
+      box.innerHTML = rows + footer;
+      box.style.display = "block";
+    } catch(e) { box.style.display = "none"; }
+  }, 220);
+}
+document.addEventListener("click", e => {
+  const wrap = document.getElementById("mainSearchWrap");
+  if (wrap && !wrap.contains(e.target)) {
+    const box = document.getElementById("mainSuggestBox"); if(!box) return;
+    if (box) box.style.display = "none";
+  }
+});
+
+loadProducts();
+
+// ── Cart badge ─────────────────────────────────────────────────
+const cart = JSON.parse(localStorage.getItem('tl_cart') || '[]');
+const badge = document.getElementById('badge-cart');
+if (badge) badge.textContent = cart.reduce((s,i) => s + i.qty, 0);
+
+// ── Device History badge (instant from pending alerts) ──────────
+(function() {
+  const isLoggedIn = localStorage.getItem('tl_logged_in') === 'true';
+  if (!isLoggedIn) return;
+  const seen    = JSON.parse(localStorage.getItem('tl_seen_alerts') || '[]');
+  const pending = JSON.parse(localStorage.getItem('tl_pending_alerts') || '[]');
+  const unseen  = pending.filter(id => !seen.includes(id));
+  const hBadge  = document.getElementById('badge-history');
+  if (hBadge && unseen.length > 0) {
+    hBadge.textContent    = unseen.length > 99 ? '99+' : unseen.length;
+    hBadge.style.display  = 'inline-block';
+    const mb = document.getElementById('menuTotalBadge');
+    if (mb) {
+      const cur = parseInt(mb.textContent) || 0;
+      mb.textContent   = (cur + unseen.length) > 99 ? '99+' : cur + unseen.length;
+      mb.style.display = 'inline-block';
+    }
+  }
+})();
+
+// ── Per-user profile: header + sidebar avatars ─────────────────
+(function() {
+  const isLoggedIn = localStorage.getItem('tl_logged_in') === 'true';
+  const hdr        = document.getElementById('headerAvatar');
+
+  if (!isLoggedIn) {
+    // Not logged in — hide the avatar circle entirely
+    if (hdr) hdr.style.display = 'none';
+    return;
+  }
+
+  const userEmail = localStorage.getItem('tl_user_email') || '';
+  const userName  = localStorage.getItem('tl_name') || '';
+
+  // Load per-user profile — same key account.js uses
+  let p = {};
+  try { p = JSON.parse(localStorage.getItem('tl_profile_' + userEmail) || '{}'); } catch {}
+
+  const displayName = p.name || userName;
+  const avatarSrc   = p.avatar
+    ? p.avatar
+    : 'https://ui-avatars.com/api/?name=' + encodeURIComponent(displayName || 'U') + '&background=4D80E4&color=fff&size=80';
+
+  // Header circle
+  if (hdr) { hdr.src = avatarSrc; hdr.style.display = ''; }
+
+  // Sidebar
+  const sideAvatar = document.getElementById('sidebarAvatar');
+  const sideName   = document.getElementById('sidebarName');
+  const sideEmail  = document.getElementById('sidebarEmail');
+  if (sideAvatar) sideAvatar.src            = avatarSrc;
+  if (sideName)   sideName.textContent      = displayName || 'User';
+  if (sideEmail)  sideEmail.textContent     = userEmail;
+
+  // Show Admin link only if admin
+  const adminLink = document.getElementById('adminMenuLink');
+  if (adminLink && localStorage.getItem('tl_role') === 'admin') {
+    adminLink.style.display = 'flex';
+  }
+})();
+
+function handleAccountClick(e) {
+  e.preventDefault();
+  const isLoggedIn = localStorage.getItem('tl_logged_in') === 'true';
+  window.location.href = isLoggedIn ? '../auth/account.html' : '../auth/login.html';
+}
+
+function requireLoginNav(e, page) {
+  e.preventDefault();
+  if (localStorage.getItem('tl_logged_in') !== 'true') {
+    window.location.href = '../auth/login.html';
+    return;
+  }
+  if (page && page !== '#') window.location.href = page;
+}
+
+async function goToMessages(e) {
+  e.preventDefault();
+  if (localStorage.getItem('tl_logged_in') !== 'true') {
+    window.location.href = '../auth/login.html';
+    return;
+  }
+  // Mark all current admin-replied messages as seen so badge clears
+  const userId = localStorage.getItem('tl_user_id') || '';
+  if (userId) {
+    try {
+      const res  = await fetch('../backend/get_user_contacts.php?user_id=' + encodeURIComponent(userId));
+      const data = await res.json();
+      if (data.success && Array.isArray(data.messages)) {
+        const allIds = data.messages
+          .filter(m => m.admin_reply && m.admin_reply.trim() !== '')
+          .map(m => String(m.id));
+        localStorage.setItem('tl_seen_messages', JSON.stringify(allIds));
+      }
+    } catch(e) {}
+  }
+  // Hide badge immediately for instant feedback
+  const badge = document.getElementById('badge-messages');
+  if (badge) badge.style.display = 'none';
+  const mainBadge = document.getElementById('menuTotalBadge');
+  // Recalculate total badge
+  const ids = ['badge-notifs','badge-device','badge-history','badge-forum','badge-orders','badge-messages','badge-cart'];
+  let total = 0;
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    if (el && el.style.display !== 'none') total += parseInt(el.textContent) || 0;
+  });
+  if (mainBadge) {
+    if (total > 0) { mainBadge.textContent = total > 99 ? '99+' : total; mainBadge.style.display = 'inline-block'; }
+    else mainBadge.style.display = 'none';
+  }
+  window.location.href = 'messages.html';
+}
+</script>
+<!-- AVATAR MODAL -->
+<div id="avatarModal" onclick="closeAvatarModal()" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.72);backdrop-filter:blur(6px);align-items:center;justify-content:center;">
+  <div onclick="event.stopPropagation()" style="display:flex;flex-direction:column;align-items:center;gap:16px;animation:popIn 0.25s cubic-bezier(0.34,1.56,0.64,1);">
+    <img id="avatarModalImg" src="" alt="Profile" style="width:220px;height:220px;border-radius:9999px;object-fit:cover;border:4px solid rgba(255,255,255,0.4);box-shadow:0 8px 40px rgba(0,0,0,0.5);">
+    <p id="avatarModalName" style="color:#fff;font-weight:700;font-size:1.15rem;letter-spacing:0.4px;"></p>
+    <button onclick="closeAvatarModal()" style="padding:8px 24px;background:rgba(255,255,255,0.18);color:#fff;border:none;border-radius:12px;font-size:0.85rem;font-weight:600;cursor:pointer;">
+      Close
+    </button>
+  </div>
+</div>
+<style>
+  @keyframes popIn {
+    from { transform:scale(0.75); opacity:0; }
+    to   { transform:scale(1);    opacity:1; }
+  }
+</style>
+<script>
+function openAvatarModal() {
+  const src  = document.getElementById('headerAvatar').src;
+  const name = document.getElementById('sidebarName')?.textContent || localStorage.getItem('tl_name') || 'User';
+  document.getElementById('avatarModalImg').src = src;
+  document.getElementById('avatarModalName').textContent = name;
+  const m = document.getElementById('avatarModal');
+  m.style.display = 'flex';
+}
+function closeAvatarModal() {
+  document.getElementById('avatarModal').style.display = 'none';
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeAvatarModal(); });
+</script>
+
+<script>
+// ── Contact section: show form if logged in, lock screen if not ──
+(function () {
+  const isLoggedIn = localStorage.getItem('tl_logged_in') === 'true';
+  const guest = document.getElementById('contactGuest');
+  const form  = document.getElementById('contactForm');
+
+  if (isLoggedIn) {
+    form.style.display  = 'block';
+    guest.style.display = 'none';
+    // Pre-fill email
+    const email = localStorage.getItem('tl_user_email') || '';
+    const emailInput = document.getElementById('contactEmail');
+    if (emailInput && email) emailInput.value = email;
+  } else {
+    guest.style.display = 'block';
+    form.style.display  = 'none';
+  }
+})();
+
+async function submitContact() {
+  const userId  = localStorage.getItem('tl_user_id')    || '';
+  const email   = document.getElementById('contactEmail').value.trim();
+  const subject = document.getElementById('contactSubject').value.trim();
+  const message = document.getElementById('contactMessage').value.trim();
+  const alert   = document.getElementById('contactAlert');
+  const btn     = document.getElementById('contactSubmitBtn');
+
+  function showAlert(msg, success) {
+    alert.textContent = msg;
+    alert.className = 'mb-4 px-4 py-3 rounded-lg text-sm font-medium ' +
+      (success ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800');
+    alert.classList.remove('hidden');
+  }
+
+  if (!email || !subject || !message) return showAlert('All fields are required.', false);
+
+  btn.disabled = true;
+  btn.textContent = 'Sending…';
+
+  try {
+    const fd = new FormData();
+    fd.append('user_id', userId);
+    fd.append('email',   email);
+    fd.append('subject', subject);
+    fd.append('message', message);
+
+    const res  = await fetch('../backend/submit_contact.php', { method: 'POST', body: fd });
+    const data = await res.json();
+
+    if (data.success) {
+      showAlert(data.message || 'Message sent!', true);
+      document.getElementById('contactSubject').value = '';
+      document.getElementById('contactMessage').value = '';
+    } else {
+      showAlert(data.message || 'Failed to send message.', false);
+    }
+  } catch (e) {
+    showAlert('Network error. Please try again.', false);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Send Message';
+  }
+}
+</script>
+<script>
+// ── Notification badge system ───────────────────────────────────
+(async function loadNotifications() {
+  const isLoggedIn = localStorage.getItem('tl_logged_in') === 'true';
+  const userId     = localStorage.getItem('tl_user_id') || '';
+  const userEmail  = localStorage.getItem('tl_user_email') || '';
+
+  function setBadge(id, count) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (count > 0) {
+      el.textContent = count > 99 ? '99+' : count;
+      el.style.display = 'inline-block';
+    } else {
+      el.style.display = 'none';
+    }
+  }
+
+  function updateTotal() {
+    const ids = ['badge-notifs','badge-device','badge-history','badge-forum','badge-orders','badge-messages','badge-cart'];
+    let total = 0;
+    ids.forEach(id => {
+      const el = document.getElementById(id);
+      if (el && el.style.display !== 'none') total += parseInt(el.textContent) || 0;
+    });
+    const mainBadge = document.getElementById('menuTotalBadge');
+    if (!mainBadge) return;
+    if (total > 0) {
+      mainBadge.textContent = total > 99 ? '99+' : total;
+      mainBadge.style.display = 'inline-block';
+    } else {
+      mainBadge.style.display = 'none';
+    }
+  }
+
+  // ── Cart (localStorage) ──────────────────────────────────────
+  const cartKey  = 'tl_cart_' + (userId || 'guest');
+  const cartData = JSON.parse(localStorage.getItem(cartKey) || localStorage.getItem('tl_cart') || '[]');
+  const cartQty  = cartData.reduce((s, i) => s + (parseInt(i.qty) || 1), 0);
+  setBadge('badge-cart', cartQty);
+
+  // If not logged in, only show cart badge and stop
+  if (!isLoggedIn || !userId) { updateTotal(); return; }
+
+  // ── Orders: notify when order is Delivered ──────────────────────
+  try {
+    const res = await fetch(`../backend/get_deliveries.php?user_id=${userId}&email=${encodeURIComponent(userEmail)}`);
+    const orders = await res.json();
+    if (Array.isArray(orders)) {
+      const seen = JSON.parse(localStorage.getItem('tl_seen_orders') || '[]');
+      const newOrders = orders.filter(o => {
+        const s = (o.status || '').toLowerCase();
+        return s === 'delivered' && !seen.includes(String(o.id));
+      });
+      setBadge('badge-orders', newOrders.length);
+    }
+  } catch(e) {}
+
+  // ── Messages: count admin replies not yet read ───────────────────
+  try {
+    const res = await fetch(`../backend/get_user_contacts.php?user_id=${userId}`);
+    const data = await res.json();
+    if (data.success && Array.isArray(data.messages)) {
+      const seen = JSON.parse(localStorage.getItem('tl_seen_messages') || '[]');
+      const unread = data.messages.filter(m =>
+        m.admin_reply && m.admin_reply.trim() !== '' && !seen.includes(String(m.id))
+      );
+      setBadge('badge-messages', unread.length);
+    }
+  } catch(e) {}
+
+  // ── Device History: notify on unseen fire/burglar alerts ───────────
+  try {
+    const res  = await fetch(`../backend/device_history.php?user_id=${userId}`);
+    const data = await res.json();
+    if (data.success && Array.isArray(data.data)) {
+      const seen    = JSON.parse(localStorage.getItem('tl_seen_alerts') || '[]');
+      const pending = JSON.parse(localStorage.getItem('tl_pending_alerts') || '[]');
+      const newAlerts = data.data.filter(h =>
+        (h.action === 'alert_fire' || h.action === 'alert_burglar') &&
+        !seen.includes(String(h.id))
+      );
+      // Also count any pending alerts not yet in the fetched list
+      const extra = pending.filter(id => !data.data.some(h => String(h.id) === id) && !seen.includes(id));
+      setBadge('badge-history', newAlerts.length + extra.length);
+    }
+  } catch(e) {
+    // Fallback: show pending count even if fetch fails
+    const seen    = JSON.parse(localStorage.getItem('tl_seen_alerts') || '[]');
+    const pending = JSON.parse(localStorage.getItem('tl_pending_alerts') || '[]');
+    const unseen  = pending.filter(id => !seen.includes(id));
+    if (unseen.length) setBadge('badge-history', unseen.length);
+  }
+
+  updateTotal();
+})();
+
+// ── Re-show alert banner if still active ────────────────────────
+(function() {
+  const stored = localStorage.getItem('tl_active_banner');
+  if (!stored) return;
+  try {
+    const { isCctv, historyId } = JSON.parse(stored);
+    const icon   = isCctv ? '🚨' : '🔥';
+    const label  = isCctv ? 'Burglar Alert' : 'Fire Alert';
+    const color  = isCctv ? '#d97706' : '#dc2626';
+    const border = isCctv ? '#fcd34d' : '#fca5a5';
+    const dest   = historyId ? `deviceHistory.html?alert=${historyId}` : 'deviceHistory.html';
+
+    const banner = document.createElement('div');
+    banner.id = 'tl-alert-banner';
+    banner.style.cssText = `
+      position:fixed; top:16px; left:-340px; z-index:9990;
+      width:310px; background:#fff;
+      border-left:4px solid ${color};
+      border-top:1px solid ${border};
+      border-bottom:1px solid ${border};
+      border-right:1px solid ${border};
+      border-radius:0 16px 16px 0;
+      box-shadow:4px 4px 24px rgba(0,0,0,.15);
+      padding:16px 18px;
+      transition:left .45s cubic-bezier(.4,0,.2,1);
+      cursor:pointer;
+      font-family:inherit;
+    `;
+    banner.innerHTML = `
+      <div style="display:flex;align-items:flex-start;gap:12px;">
+        <div style="font-size:26px;line-height:1;">${icon}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-weight:800;font-size:13px;color:${color};letter-spacing:.4px;">${label} Triggered</div>
+          <div style="font-size:12px;color:#6b7280;margin-top:3px;line-height:1.45;">
+            Alert logged in Device History.<br>
+            <span style="color:${color};font-weight:700;">Tap to view details →</span>
+          </div>
+        </div>
+        <button id="tl-alert-banner-close" style="background:none;border:none;cursor:pointer;color:#9ca3af;font-size:16px;padding:0 0 0 4px;line-height:1;flex-shrink:0;" title="Dismiss">✕</button>
+      </div>
+    `;
+    document.body.appendChild(banner);
+    setTimeout(() => { banner.style.left = '0px'; }, 300);
+
+    banner.addEventListener('click', (e) => {
+      if (e.target.id === 'tl-alert-banner-close') return;
+      localStorage.removeItem('tl_active_banner');
+      window.location.href = dest;
+    });
+    document.getElementById('tl-alert-banner-close').addEventListener('click', (e) => {
+      e.stopPropagation();
+      localStorage.removeItem('tl_active_banner');
+      banner.style.left = '-340px';
+      setTimeout(() => banner.remove(), 450);
+    });
+  } catch(_) { localStorage.removeItem('tl_active_banner'); }
+})();
+</script>
+
+<!-- ═══════ TERMS & POLICY MODAL (first-time login only) ═══════ -->
+<div id="termsModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.6);backdrop-filter:blur(4px);align-items:flex-end;justify-content:center;">
+  <div style="background:#fff;border-radius:24px 24px 0 0;width:100%;max-width:480px;max-height:92vh;display:flex;flex-direction:column;animation:slideUpTerms .35s cubic-bezier(.4,0,.2,1);">
+    <style>
+      @keyframes slideUpTerms { from{transform:translateY(100%)} to{transform:translateY(0)} }
+      #termsBody::-webkit-scrollbar { width:4px; }
+      #termsBody::-webkit-scrollbar-thumb { background:#d1d5db; border-radius:4px; }
+    </style>
+
+    <!-- Handle -->
+    <div style="width:40px;height:5px;background:#e5e7eb;border-radius:99px;margin:12px auto 0;flex-shrink:0;"></div>
+
+    <!-- Header -->
+    <div style="padding:16px 20px 12px;border-bottom:1px solid #f3f4f6;flex-shrink:0;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div style="width:40px;height:40px;border-radius:12px;background:var(--color-primary);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <i class="fas fa-shield-halved" style="color:#fff;font-size:1.1rem;"></i>
+        </div>
+        <div>
+          <div style="font-weight:800;font-size:1rem;color:#111827;">Terms &amp; Privacy Policy</div>
+          <div style="font-size:0.72rem;color:#9ca3af;">Please review before continuing</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Scrollable content -->
+    <div id="termsBody" style="flex:1;overflow-y:auto;padding:16px 20px;">
+
+      <div style="background:#f0f2ff;border-radius:12px;padding:12px 14px;margin-bottom:14px;border-left:3px solid var(--color-primary);">
+        <div style="font-size:0.72rem;font-weight:700;color:var(--color-primary);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px;">Welcome to Technilog!</div>
+        <div style="font-size:0.78rem;color:#4b5563;line-height:1.5;">By using our platform you agree to the following terms. Please read them carefully.</div>
+      </div>
+
+      <div style="font-size:0.82rem;color:#374151;line-height:1.6;">
+
+        <div style="font-weight:700;color:#111827;margin-bottom:4px;">1. Account Responsibility</div>
+        <p style="margin-bottom:12px;">You are responsible for maintaining the confidentiality of your account credentials. Any activity under your account is your responsibility. Notify us immediately of any unauthorized use.</p>
+
+        <div style="font-weight:700;color:#111827;margin-bottom:4px;">2. Use of Service</div>
+        <p style="margin-bottom:12px;">Technilog is a platform for purchasing and managing smart security devices. You agree to use our services only for lawful purposes and in accordance with these terms.</p>
+
+        <div style="font-weight:700;color:#111827;margin-bottom:4px;">3. Privacy &amp; Data Collection</div>
+        <p style="margin-bottom:12px;">We collect your name, email address, and device usage data to provide and improve our services. We do not sell your personal information to third parties. Your data is stored securely and only used for service delivery.</p>
+
+        <div style="font-weight:700;color:#111827;margin-bottom:4px;">4. Device Alerts &amp; Notifications</div>
+        <p style="margin-bottom:12px;">By registering a smart device, you consent to receiving alert notifications via email when your device detects an event (e.g. fire, motion). Test alerts are for simulation only and are logged in Device History.</p>
+
+        <div style="font-weight:700;color:#111827;margin-bottom:4px;">5. Orders &amp; Payments</div>
+        <p style="margin-bottom:12px;">All orders are subject to availability. Prices are displayed in Philippine Peso (₱). Payment must be completed at checkout. Technilog reserves the right to cancel orders due to stock or payment issues.</p>
+
+        <div style="font-weight:700;color:#111827;margin-bottom:4px;">6. Limitation of Liability</div>
+        <p style="margin-bottom:12px;">Technilog is not liable for damages arising from misuse of devices, delayed alerts due to network issues, or unauthorized account access. Our devices are supplementary security tools, not replacements for professional services.</p>
+
+        <div style="font-weight:700;color:#111827;margin-bottom:4px;">7. Changes to Terms</div>
+        <p style="margin-bottom:4px;">We may update these terms at any time. Continued use of Technilog after changes constitutes acceptance of the revised terms.</p>
+
+      </div>
+
+      <div style="background:#fef3c7;border-radius:10px;padding:10px 12px;margin-top:14px;font-size:0.75rem;color:#92400e;">
+        <i class="fas fa-circle-info" style="margin-right:4px;"></i>
+        By tapping <strong>"I Agree"</strong> you confirm you have read and accepted these Terms &amp; Privacy Policy.
+      </div>
+    </div>
+
+    <!-- Checkbox + Buttons -->
+    <div style="padding:14px 20px 24px;flex-shrink:0;border-top:1px solid #f3f4f6;display:flex;flex-direction:column;gap:10px;">
+      <!-- Checkbox -->
+      <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;padding:10px 12px;border-radius:12px;border:1.5px solid #e5e7eb;background:#f9fafb;transition:border-color 0.2s;" id="termsCheckLabel">
+        <input type="checkbox" id="termsCheckbox" onchange="toggleAgreeBtn()" style="margin-top:2px;width:17px;height:17px;cursor:pointer;accent-color:var(--color-primary);flex-shrink:0;">
+        <span style="font-size:0.78rem;color:#4b5563;line-height:1.5;">I have read and agree to the <strong style="color:var(--color-primary);">Terms &amp; Privacy Policy</strong> of Technilog.</span>
+      </label>
+      <button id="termsAgreeBtn" onclick="acceptTerms()" disabled style="width:100%;padding:13px;border-radius:14px;background:#d1d5db;color:#9ca3af;font-weight:700;font-size:0.9rem;border:none;cursor:not-allowed;transition:all 0.2s;">
+        <i class="fas fa-check" style="margin-right:6px;"></i>I Agree &amp; Continue
+      </button>
+      <button onclick="declineTerms()" style="width:100%;padding:11px;border-radius:14px;background:#f9fafb;color:#6b7280;font-weight:600;font-size:0.85rem;border:1px solid #e5e7eb;cursor:pointer;">
+        Decline &amp; Log Out
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  const isLoggedIn  = localStorage.getItem('tl_logged_in') === 'true';
+  const acceptedKey = 'tl_terms_accepted_' + (localStorage.getItem('tl_user_id') || 'guest');
+  const hasAccepted = localStorage.getItem(acceptedKey) === 'true';
+
+  if (isLoggedIn && !hasAccepted) {
+    const modal = document.getElementById('termsModal');
+    modal.style.display = 'flex';
+    // prevent scrolling behind modal
+    document.body.style.overflow = 'hidden';
+  }
+})();
+
+function toggleAgreeBtn() {
+  const checked = document.getElementById('termsCheckbox').checked;
+  const btn = document.getElementById('termsAgreeBtn');
+  const label = document.getElementById('termsCheckLabel');
+  if (checked) {
+    btn.disabled = false;
+    btn.style.background = 'var(--color-primary)';
+    btn.style.color = '#fff';
+    btn.style.cursor = 'pointer';
+    label.style.borderColor = 'var(--color-primary)';
+    label.style.background = '#f0f2ff';
+  } else {
+    btn.disabled = true;
+    btn.style.background = '#d1d5db';
+    btn.style.color = '#9ca3af';
+    btn.style.cursor = 'not-allowed';
+    label.style.borderColor = '#e5e7eb';
+    label.style.background = '#f9fafb';
+  }
+}
+
+function acceptTerms() {
+  const acceptedKey = 'tl_terms_accepted_' + (localStorage.getItem('tl_user_id') || 'guest');
+  localStorage.setItem(acceptedKey, 'true');
+  const modal = document.getElementById('termsModal');
+  modal.style.opacity = '0';
+  modal.style.transition = 'opacity 0.3s';
+  document.body.style.overflow = '';
+  setTimeout(() => modal.style.display = 'none', 300);
+}
+
+function declineTerms() {
+  // Log out and redirect to login
+  localStorage.removeItem('tl_logged_in');
+  localStorage.removeItem('tl_user_email');
+  localStorage.removeItem('tl_name');
+  localStorage.removeItem('tl_role');
+  localStorage.removeItem('tl_user_id');
+  document.body.style.overflow = '';
+  window.location.replace('../auth/login.html');
+}
+</script>
+</body>
+</html>

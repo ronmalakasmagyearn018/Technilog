@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>My Messages chnilog</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="../stylesheet/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <style>
+    :root {
+      --color-primary: #2E279D;
+      --color-secondary: #4D80E4;
+      --color-tertiary: #46B3E6;
+      --color-quarternary: #DFF6F0;
+    }
+
+    body { background: #f3f4f6; min-height: 100vh; font-family: Arial, sans-serif; }
+
+    /* ── Message card ── */
+    .msg-card {
+      background: #fff;
+      border-radius: 1rem;
+      box-shadow: 0 2px 12px rgba(0,0,0,.07);
+      margin-bottom: 1.25rem;
+      overflow: hidden;
+      transition: transform .2s, box-shadow .2s;
+    }
+    .msg-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,.10); }
+
+    .msg-header {
+      padding: .85rem 1.25rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: .75rem;
+      border-bottom: 1px solid #f3f4f6;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .badge-replied  { background: #dcfce7; color: #15803d; }
+    .badge-pending  { background: #fef9c3; color: #92400e; }
+    .status-badge   { display:inline-block; padding: 2px 10px; border-radius: 9999px; font-size: .7rem; font-weight: 700; white-space: nowrap; }
+
+    .msg-body { padding: 1rem 1.25rem; display: none; }
+    .msg-body.open { display: block; }
+
+    .label-tag {
+      font-size: .7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: #9ca3af;
+      margin-bottom: .35rem;
+    }
+    .msg-text {
+      background: #f9fafb;
+      border-radius: .6rem;
+      padding: .75rem 1rem;
+      font-size: .875rem;
+      color: #374151;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .reply-box {
+      background: #eff6ff;
+      border-left: 4px solid var(--color-primary);
+      border-radius: .6rem;
+      padding: .75rem 1rem;
+      font-size: .875rem;
+      color: #1e3a8a;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .reply-label {
+      font-size: .7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--color-secondary);
+      margin-bottom: .35rem;
+    }
+
+    /* ── Empty / loading states ── */
+    .state-box {
+      text-align: center;
+      padding: 4rem 1.5rem;
+      color: #9ca3af;
+    }
+    .state-box i { font-size: 3rem; margin-bottom: .75rem; display: block; }
+
+    /* ── Filter tabs ── */
+    .tab-btn { transition: all .2s; }
+    .tab-btn.active { background: var(--color-primary); color: #fff; }
+    .tab-btn:not(.active) { background: #e5e7eb; color: #374151; }
+
+    /* ── Pulse animation for new replies ── */
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: .4; }
+    }
+    .pulse { animation: pulse-dot 1.5s infinite; }
+
+    /* ── User reply section ── */
+    .user-reply-box {
+      background: #f0fdf4;
+      border-left: 4px solid #16a34a;
+      border-radius: .6rem;
+      padding: .75rem 1rem;
+      font-size: .875rem;
+      color: #166534;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .user-reply-label {
+      font-size: .7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: #16a34a;
+      margin-bottom: .35rem;
+    }
+    .reply-textarea {
+      width: 100%;
+      border: 1.5px solid #e5e7eb;
+      border-radius: .6rem;
+      padding: .65rem .9rem;
+      font-size: .875rem;
+      color: #374151;
+      resize: vertical;
+      outline: none;
+      transition: border-color .2s;
+      font-family: inherit;
+      min-height: 80px;
+      box-sizing: border-box;
+    }
+    .reply-textarea:focus { border-color: var(--color-secondary); }
+    .btn-send-user-reply {
+      background: var(--color-primary);
+      color: #fff;
+      border: none;
+      border-radius: .6rem;
+      padding: .55rem 1.2rem;
+      font-size: .8rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity .2s;
+      display: inline-flex;
+      align-items: center;
+      gap: .4rem;
+    }
+    .btn-send-user-reply:hover { opacity: .85; }
+    .btn-send-user-reply:disabled { opacity: .5; cursor: not-allowed; }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="fixed top-0 left-0 w-full z-50 shadow-md" style="background:var(--color-primary);">
+  <div class="max-w-3xl mx-auto flex items-center justify-between h-[56px] px-3 md:px-4">
+    <a href="main.html" class="flex items-center space-x-2 text-white font-bold text-xl tracking-wide">
+      <img src="../image/logo.png" alt="Logo" class="h-8 md:h-10 rounded-full">
+      <span>TECHNILOG</span>
+    </a>
+    <a href="main.html" class="text-white text-sm hover:text-yellow-300 transition">
+      <i class="fas fa-arrow-left mr-1"></i> Back to Homepage
+    </a>
+  </div>
+</header>
+
+<div class="h-[56px] md:h-[64px]"></div>
+
+<!-- PAGE -->
+<div class="max-w-3xl mx-auto px-4 py-8">
+
+  <!-- Title row -->
+  <div class="flex items-center justify-between mb-1">
+    <h1 class="text-2xl font-bold text-gray-800">My Messages</h1>
+    <span id="msgCountLabel" class="text-sm text-gray-400"></span>
+  </div>
+  <p class="text-gray-500 text-sm mb-6">Your inquiries and admin replies</p>
+
+  <!-- Admin Warnings Banner -->
+  <div id="warningsSection" style="display:none;" class="mb-6">
+    <div class="flex items-center justify-between mb-3">
+      <h2 class="text-base font-bold text-red-600"><i class="fas fa-exclamation-triangle mr-1"></i> Admin Warnings <span id="warnBadge" class="ml-1 bg-red-500 text-white text-xs font-bold rounded-full px-2 py-0.5" style="display:none;"></span></h2>
+    </div>
+    <div id="warningsList"></div>
+  </div>
+
+  <!-- Filter tabs -->
+  <div class="flex gap-2 mb-6 flex-wrap">
+    <button class="tab-btn active px-4 py-2 rounded-full text-sm font-semibold" data-filter="all">All</button>
+    <button class="tab-btn px-4 py-2 rounded-full text-sm font-semibold" data-filter="Pending">Pending</button>
+    <button class="tab-btn px-4 py-2 rounded-full text-sm font-semibold" data-filter="Replied">Replied</button>
+  </div>
+
+  <!-- Messages list -->
+  <div id="msgList">
+    <div class="state-box">
+      <i class="fas fa-spinner fa-spin" style="color:var(--color-secondary);"></i>
+      <p class="text-sm">Loading your messages…</p>
+    </div>
+  </div>
+
+</div>
+
+<!-- NOT LOGGED IN OVERLAY -->
+<div id="notLoggedIn" class="hidden fixed inset-0 bg-gray-50 z-40 flex flex-col items-center justify-center text-center px-6">
+  <i class="fas fa-lock text-5xl mb-4" style="color:var(--color-primary);"></i>
+  <h2 class="text-xl font-bold text-gray-800 mb-2">Login Required</h2>
+  <p class="text-gray-500 mb-6 text-sm">Please log in to view your messages.</p>
+  <a href="../auth/login.html" class="px-6 py-2 rounded-lg text-gray-900 font-semibold shadow-md transition hover:opacity-90" style="background:var(--color-quarternary);">
+    Log In
+  </a>
+</div>
+
+<script>
+(function () {
+  const userId = localStorage.getItem('tl_user_id');
+
+  // Not logged in
+  if (!userId) {
+    document.getElementById('notLoggedIn').classList.remove('hidden');
+    return;
+  }
+
+  let allMessages = [];
+  let activeFilter = 'all';
+
+  // ── Fetch messages ────────────────────────────────────────────
+  async function loadMessages() {
+    try {
+      const res  = await fetch('../backend/get_user_contacts.php?user_id=' + encodeURIComponent(userId));
+      const data = await res.json();
+
+      if (!data.success) {
+        showError(data.message || 'Could not load messages.');
+        return;
+      }
+
+      allMessages = data.messages || [];
+      renderMessages();
+    } catch (e) {
+      showError('Network error. Please try again.');
+    }
+  }
+
+  // ── Render ────────────────────────────────────────────────────
+  function renderMessages() {
+    const list = activeFilter === 'all'
+      ? allMessages
+      : allMessages.filter(m => m.status === activeFilter);
+
+    const total   = allMessages.length;
+    const replied = allMessages.filter(m => m.status === 'Replied').length;
+    const pending = allMessages.filter(m => m.status === 'Pending').length;
+
+    document.getElementById('msgCountLabel').textContent =
+      total ? `${total} total · ${replied} replied · ${pending} pending` : '';
+
+    const wrap = document.getElementById('msgList');
+
+    if (!list.length) {
+      wrap.innerHTML = `<div class="state-box">
+        <i class="fas fa-inbox" style="color:#d1d5db;"></i>
+        <p class="text-sm">${activeFilter === 'all' ? 'No messages yet. Send us a message via Contact Us!' : 'No ' + activeFilter.toLowerCase() + ' messages.'}</p>
+        ${activeFilter === 'all' ? `<a href="main.html#contact" class="inline-block mt-4 px-5 py-2 rounded-lg text-sm font-semibold text-white transition hover:opacity-90" style="background:var(--color-primary);">
+          <i class="fas fa-paper-plane mr-1"></i> Send a Message
+        </a>` : ''}
+      </div>`;
+      return;
+    }
+
+    wrap.innerHTML = list.map((m, i) => {
+      const sentDate    = fmtDate(m.created_at);
+      const repliedDate = m.replied_at ? fmtDate(m.replied_at) : null;
+      const isReplied   = m.status === 'Replied';
+
+      return `
+      <div class="msg-card">
+        <div class="msg-header" onclick="toggleCard(this)">
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 mb-0.5 flex-wrap">
+              <span class="font-bold text-gray-800 text-sm truncate">${escH(m.subject)}</span>
+              ${isReplied
+                ? `<span class="status-badge badge-replied"><i class="fas fa-check-circle mr-0.5"></i>Replied</span>`
+                : `<span class="status-badge badge-pending pulse"><i class="fas fa-clock mr-0.5"></i>Pending</span>`}
+            </div>
+            <p class="text-xs text-gray-400">Sent ${sentDate}</p>
+          </div>
+          <i class="fas fa-chevron-down text-gray-300 text-sm mt-1 transition-transform duration-200 chevron-icon"></i>
+        </div>
+        <div class="msg-body">
+          <div class="mb-4">
+            <p class="label-tag">Your Message</p>
+            <div class="msg-text">${escH(m.message)}</div>
+          </div>
+          ${isReplied && m.admin_reply ? `
+          <div class="mb-4">
+            <p class="reply-label"><i class="fas fa-reply mr-1"></i>Admin Reply${repliedDate ? ' &middot; ' + repliedDate : ''}</p>
+            <div class="reply-box">${escH(m.admin_reply)}</div>
+          </div>
+          ${m.user_reply ? `
+          <div class="mb-4">
+            <p class="user-reply-label"><i class="fas fa-reply mr-1" style="transform:scaleX(-1);display:inline-block;"></i>Your Reply &middot; ${fmtDate(m.user_replied_at)}</p>
+            <div class="user-reply-box">${escH(m.user_reply)}</div>
+          </div>` : ''}
+          <div class="mt-3">
+            <p class="label-tag" style="margin-bottom:.35rem;">Reply to Admin</p>
+            <textarea class="reply-textarea" id="userReplyInput-${m.id}" placeholder="Write a follow-up message…"></textarea>
+            <div class="mt-2">
+              <button class="btn-send-user-reply" onclick="sendUserReply(${m.id}, this)">
+                <i class="fas fa-paper-plane"></i> Send Reply
+              </button>
+            </div>
+          </div>` : `
+          <div class="text-xs text-gray-400 italic mt-1">
+            <i class="fas fa-hourglass-half mr-1"></i>We haven't replied yet — we'll get back to you soon!
+          </div>`}
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // ── Toggle accordion card ─────────────────────────────────────
+  window.toggleCard = function (header) {
+    const body    = header.nextElementSibling;
+    const chevron = header.querySelector('.chevron-icon');
+    const isOpen  = body.classList.contains('open');
+    body.classList.toggle('open', !isOpen);
+    if (chevron) chevron.style.transform = isOpen ? '' : 'rotate(180deg)';
+  };
+
+  // ── Filter tabs ───────────────────────────────────────────────
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      activeFilter = btn.dataset.filter;
+      renderMessages();
+    });
+  });
+
+  // ── Helpers ───────────────────────────────────────────────────
+  function fmtDate(str) {
+    if (!str) return '';
+    return new Date(str).toLocaleDateString('en-PH', { year: 'numeric', month: 'short', day: 'numeric' });
+  }
+
+  function escH(str) {
+    return String(str || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function showError(msg) {
+    document.getElementById('msgList').innerHTML =
+      `<div class="state-box"><i class="fas fa-exclamation-circle" style="color:#f87171;"></i><p class="text-sm text-red-400">${escH(msg)}</p></div>`;
+  }
+
+  // ── Send user reply ──────────────────────────────────────────
+  window.sendUserReply = async function(contactId, btn) {
+    const textarea = document.getElementById('userReplyInput-' + contactId);
+    const text = textarea ? textarea.value.trim() : '';
+    if (!text) { textarea && textarea.focus(); return; }
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending…';
+
+    try {
+      const fd = new FormData();
+      fd.append('contact_id', contactId);
+      fd.append('user_id',    userId);
+      fd.append('user_reply', text);
+
+      const res  = await fetch('../backend/user_reply_contact.php', { method: 'POST', body: fd });
+      const data = await res.json();
+
+      if (data.success) {
+        textarea.value = '';
+        btn.innerHTML = '<i class="fas fa-check"></i> Sent!';
+        btn.style.background = '#16a34a';
+        setTimeout(() => loadMessages(), 1200);
+      } else {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-paper-plane"></i> Send Reply';
+        alert(data.message || 'Could not send reply.');
+      }
+    } catch(e) {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-paper-plane"></i> Send Reply';
+      alert('Network error. Please try again.');
+    }
+  };
+
+  // ── Load admin warnings ──────────────────────────────────────────
+  async function loadWarnings() {
+    try {
+      const res  = await fetch('../backend/get_user_warnings.php?user_id=' + encodeURIComponent(userId));
+      const data = await res.json();
+      if (!data.success || !data.warnings || data.warnings.length === 0) return;
+
+      const section = document.getElementById('warningsSection');
+      const list    = document.getElementById('warningsList');
+      const badge   = document.getElementById('warnBadge');
+      if (!section || !list) return;
+
+      section.style.display = 'block';
+
+      if (data.unread > 0) {
+        badge.textContent = data.unread + ' new';
+        badge.style.display = 'inline';
+      }
+
+      list.innerHTML = data.warnings.map(w => {
+        const date     = new Date(w.created_at).toLocaleString('en-PH');
+        const isNew    = !parseInt(w.is_read);
+        const newLabel = isNew ? '<span class="ml-2 bg-red-500 text-white text-xs font-bold rounded-full px-2 py-0.5">NEW</span>' : '';
+        return `<div class="rounded-xl border-2 p-4 mb-3" style="border-color:#fca5a5;background:#fff5f5;">
+          <div class="flex items-start justify-between gap-2 mb-2">
+            <span class="text-xs font-bold uppercase text-red-500"><i class="fas fa-shield-halved mr-1"></i>Admin Warning${newLabel}</span>
+            <span class="text-xs text-gray-400">${date}</span>
+          </div>
+          <p class="text-sm text-gray-800 whitespace-pre-wrap">${escH(w.message)}</p>
+          <p class="text-xs text-orange-600 mt-3 font-semibold">⚠️ Repeated violations of community guidelines may result in a permanent ban.</p>
+        </div>`;
+      }).join('');
+
+      // Mark as read
+      if (data.unread > 0) {
+        const fd = new FormData();
+        fd.append('user_id', userId);
+        fetch('../backend/mark_warnings_read.php', { method: 'POST', body: fd }).catch(() => {});
+      }
+    } catch (_) {}
+  }
+
+  function escH(str) {
+    const d = document.createElement('div');
+    d.appendChild(document.createTextNode(str || ''));
+    return d.innerHTML;
+  }
+
+  loadMessages();
+  loadWarnings();
+})();
+</script>
+
+</body>
+</html>

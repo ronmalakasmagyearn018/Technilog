@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="eng">
+
+<head>
+  <title>Product Technilog</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="../stylesheet/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <style>
+    body {
+      background: #f8f9fb;
+    }
+
+    /* Breadcrumb */
+    .breadcrumb {
+      font-size: 0.82rem;
+      color: #6b7280;
+    }
+
+    .breadcrumb a {
+      color: var(--color-secondary);
+      text-decoration: none;
+    }
+
+    .breadcrumb a:hover {
+      text-decoration: underline;
+    }
+
+    /* Image gallery */
+    #mainImage {
+      width: 100%;
+      aspect-ratio: 1;
+      object-fit: cover;
+      border-radius: 16px;
+      background: #e5e7eb;
+      cursor: zoom-in;
+    }
+
+    .thumb {
+      width: 70px;
+      height: 70px;
+      object-fit: cover;
+      border-radius: 10px;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: border-color 0.2s;
+    }
+
+    .thumb.active {
+      border-color: var(--color-secondary);
+    }
+
+    .thumb:hover {
+      border-color: var(--color-primary);
+    }
+
+    /* Variant pills */
+    .variant-pill {
+      padding: 6px 16px;
+      border-radius: 8px;
+      border: 1.5px solid #d1d5db;
+      cursor: pointer;
+      font-size: 0.88rem;
+      font-weight: 500;
+      transition: all 0.2s;
+      background: #fff;
+    }
+
+    .variant-pill:hover {
+      border-color: var(--color-secondary);
+      color: var(--color-secondary);
+    }
+
+    .variant-pill.selected {
+      border-color: var(--color-primary);
+      background: var(--color-primary);
+      color: #fff;
+    }
+
+    /* Qty stepper */
+    .qty-btn {
+      width: 36px;
+      height: 36px;
+      border: 1.5px solid #d1d5db;
+      border-radius: 8px;
+      background: #fff;
+      font-size: 1.1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .qty-btn:hover {
+      border-color: var(--color-primary);
+      color: var(--color-primary);
+    }
+
+    #qtyInput {
+      width: 50px;
+      text-align: center;
+      border: 1.5px solid #d1d5db;
+      border-radius: 8px;
+      height: 36px;
+      font-size: 1rem;
+      outline: none;
+    }
+
+    /* Buttons */
+    .btn-cart {
+      flex: 1;
+      padding: 12px;
+      border: 2px solid var(--color-primary);
+      color: var(--color-primary);
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 0.95rem;
+      background: #fff;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-cart:hover {
+      background: var(--color-quarternary);
+    }
+
+    .btn-buy {
+      flex: 1;
+      padding: 12px;
+      background: var(--color-primary);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+
+    .btn-buy:hover {
+      opacity: 0.88;
+    }
+
+    /* Specs table */
+    .spec-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+    }
+
+    .spec-table tr:nth-child(odd) td {
+      background: #f3f4f6;
+    }
+
+    .spec-table td {
+      padding: 8px 12px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .spec-table td:first-child {
+      color: #6b7280;
+      font-weight: 500;
+      width: 40%;
+    }
+
+    /* Star rating */
+    .stars {
+      color: #f59e0b;
+    }
+
+    /* Related products */
+    .related-card {
+      background: #fff;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+
+    .related-card:hover {
+      transform: translateY(-3px);
+    }
+
+    .related-card img {
+      width: 100%;
+      height: 130px;
+      object-fit: cover;
+    }
+
+    .related-card-body {
+      padding: 0.7rem;
+    }
+
+    /* Cart toast */
+    #cartToast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 9999;
+      background: var(--color-primary);
+      color: #fff;
+      padding: 12px 22px;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+      transform: translateY(80px);
+      opacity: 0;
+      transition: all 0.35s cubic-bezier(.4, 0, .2, 1);
+    }
+
+    #cartToast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    /* ── Mobile review card fixes ── */
+    @media (max-width: 640px) {
+      /* Review section padding */
+      #reviewsSection { padding: 1rem !important; }
+
+      /* Each review card */
+      #reviewsList .border { padding: 10px !important; }
+
+      /* Header row: stack user info and stars/reply */
+      #reviewsList .flex.items-start.justify-between {
+        flex-direction: column !important;
+        gap: 6px !important;
+      }
+
+      /* Stars: smaller on mobile */
+      #reviewsList .text-yellow-400 {
+        font-size: 0.75rem !important;
+      }
+
+      /* Star filter pills: scrollable row, no wrap */
+      #starFilters {
+        flex-wrap: nowrap !important;
+        overflow-x: auto !important;
+        padding-bottom: 4px !important;
+        scrollbar-width: none !important;
+      }
+      #starFilters::-webkit-scrollbar { display: none; }
+      #starFilters .star-filter-btn {
+        flex-shrink: 0 !important;
+        font-size: 0.72rem !important;
+        padding: 4px 10px !important;
+      }
+
+      /* Reply button: compact */
+      #reviewsList button[onclick*="openReplyModal"] {
+        font-size: 0.7rem !important;
+        padding: 3px 8px !important;
+      }
+
+      /* Review summary score: smaller */
+      #avgScore { font-size: 2rem !important; }
+      #avgStars { font-size: 0.9rem !important; }
+
+      /* Admin reply block */
+      #reviewsList .mt-3.p-3 {
+        padding: 8px !important;
+        font-size: 0.78rem !important;
+      }
+
+      /* Review comment text */
+      #reviewsList p.text-gray-700 {
+        font-size: 0.8rem !important;
+      }
+
+      /* Review photo */
+      #reviewsList img.h-28 {
+        height: 80px !important;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="h-[56px] md:h-[72px]"></div>
+
+  <!-- HEADER -->
+  <header class="fixed top-0 left-0 w-full z-50 shadow-md" style="background-color:var(--color-primary);">
+    <div class="max-w-7xl mx-auto flex items-center h-[56px] md:h-[72px] px-3 md:px-4 gap-2 md:gap-4">
+      <a href="main.html" class="flex items-center gap-2 group">
+        <img src="../image/logo.png" alt="Logo" class="h-12 rounded-full group-hover:scale-105 transition">
+        <span class="text-white font-bold text-xl tracking-wide">TECHNILOG</span>
+      </a>
+      <div class="ml-auto flex items-center gap-4">
+        <a href="main.html" class="text-white/80 hover:text-white text-sm transition"><i
+            class="fas fa-arrow-left mr-1"></i>Back</a>
+        <a href="cart.html" class="text-white relative text-xl">
+          <i class="fas fa-shopping-cart"></i>
+          <span id="cartHeaderBadge"
+            class="absolute -top-2 -right-2 bg-red-500 text-white text-xs px-1 rounded-full">0</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <div class="max-w-6xl mx-auto px-4 py-6">
+
+    <!-- BREADCRUMB -->
+    <div class="breadcrumb mb-5">
+      <a href="main.html">Home</a> &rsaquo; <a href="main.html#products">Products</a> &rsaquo; <span
+        id="breadName">…</span>
+    </div>
+
+    <!-- PRODUCT MAIN -->
+    <div class="flex flex-col lg:flex-row gap-8 bg-white rounded-2xl shadow p-6 mb-6">
+
+      <!-- LEFT: Images -->
+      <div class="w-full lg:w-[42%]">
+        <div id="mainImgWrap" class="mb-3">
+          <img id="mainImage" src="" alt="Product" onerror="this.src='../image/logo.png'">
+        </div>
+        <div id="thumbsRow" class="flex flex-wrap gap-2"></div>
+      </div>
+
+      <!-- RIGHT: Details -->
+      <div class="flex-1">
+        <div id="prodCat" class="text-xs font-semibold uppercase tracking-widest mb-1"
+          style="color:var(--color-secondary);"></div>
+        <h1 id="prodName" class="text-2xl font-bold text-gray-900 mb-2"></h1>
+
+        <!-- Rating placeholder -->
+        <div class="flex items-center gap-3 mb-4">
+          <div id="prodStars" class="stars text-sm"><i class="far fa-star"></i><i class="far fa-star"></i><i class="far fa-star"></i><i class="far fa-star"></i><i class="far fa-star"></i></div>
+          <span class="text-gray-500 text-sm"><span id="prodRatingText">—</span> / 5.0</span>
+          <span class="text-gray-400 text-xs" id="prodRatingCount"></span>
+        </div>
+
+        <!-- Price -->
+        <div id="priceDisplay" class="text-3xl font-bold mb-5" style="color:var(--color-primary);">₱0.00</div>
+
+        <!-- Variants -->
+        <div id="variantsSection" class="mb-5 hidden">
+          <div class="text-sm font-semibold text-gray-600 mb-2">Variants</div>
+          <div id="variantPills" class="flex flex-wrap gap-2"></div>
+        </div>
+
+        <!-- Qty -->
+        <div class="flex items-center gap-3 mb-5">
+          <div class="text-sm font-semibold text-gray-600">Quantity</div>
+          <button class="qty-btn" onclick="changeQty(-1)">−</button>
+          <input id="qtyInput" type="number" value="1" min="1" max="99" readonly>
+          <button class="qty-btn" onclick="changeQty(1)">+</button>
+          <span id="stockLabel" class="text-xs text-gray-400"></span>
+        </div>
+
+        <!-- Description -->
+        <div class="mb-5">
+          <div class="text-sm font-semibold text-gray-600 mb-1">Description</div>
+          <p id="prodDesc" class="text-gray-600 text-sm leading-relaxed"></p>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex gap-3">
+          <button class="btn-cart" onclick="addToCart()"><i class="fas fa-cart-plus mr-2"></i>Add to Cart</button>
+          <button class="btn-buy" onclick="buyNow()"><i class="fas fa-bolt mr-2"></i>Buy Now</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- SPECIFICATIONS -->
+    <div id="specsSection" class="bg-white rounded-2xl shadow p-6 mb-6 hidden">
+      <h2 class="font-bold text-lg text-gray-800 mb-4">Specifications</h2>
+      <table class="spec-table" id="specsTable"></table>
+    </div>
+
+    <!-- RELATED PRODUCTS -->
+    <div id="relatedSection" class="bg-white rounded-2xl shadow p-6">
+      <h2 class="font-bold text-lg text-gray-800 mb-4">Related Products</h2>
+      <div id="relatedGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+        <p class="col-span-full text-gray-400 text-sm">Loading…</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="py-4 px-4" style="background-color: var(--color-primary);">
+  <div class="flex flex-col md:flex-row items-center justify-between gap-3">
+    <div class="hidden md:block md:w-1/3"></div>
+    <div class="text-center text-xs text-white/80">© 2026 TECHNILOG. All rights reserved.</div>
+    <div class="flex justify-center md:justify-end gap-5 md:w-1/3">
+      <a href="https://facebook.com" target="_blank" class="text-xl text-white hover:text-[var(--color-tertiary)] transition"><i class="fa-brands fa-facebook"></i></a>
+      <a href="https://instagram.com" target="_blank" class="text-xl text-white hover:text-[var(--color-tertiary)] transition"><i class="fa-brands fa-instagram"></i></a>
+      <a href="https://tiktok.com" target="_blank" class="text-xl text-white hover:text-[var(--color-tertiary)] transition"><i class="fa-brands fa-tiktok"></i></a>
+    </div>
+  </div>
+</footer>
+
+  <div id="cartToast"></div>
+
+  <script src="../js/forProduct.js"></script>
+  <script>
+    // Auth guard: intercept buyNow and addToCart after forProduct.js defines them
+    (function () {
+      var _origBuyNow = window.buyNow;
+      var _origAddToCart = window.addToCart;
+
+      window.buyNow = function () {
+        if (localStorage.getItem('tl_logged_in') !== 'true') {
+          window.location.href = '../auth/login.html';
+          return;
+        }
+        if (typeof _origBuyNow === 'function') _origBuyNow.apply(this, arguments);
+      };
+
+      window.addToCart = function () {
+        if (localStorage.getItem('tl_logged_in') !== 'true') {
+          window.location.href = '../auth/login.html';
+          return;
+        }
+        if (typeof _origAddToCart === 'function') _origAddToCart.apply(this, arguments);
+      };
+    })();
+  </script>
+  <script src="../js/review.js"></script>
+  <script>
+    // Sync the product-page star display (top of page) after review.js loads reviews
+    // review.js already handles the full section; this just keeps prodStars/prodRatingText in sync
+    (function () {
+      const params    = new URLSearchParams(window.location.search);
+      const productId = params.get('id') || params.get('product_id');
+      if (!productId) return;
+      fetch('../backend/review.php?action=get&product_id=' + productId)
+        .then(r => r.json())
+        .then(data => {
+          if (!data.success) return;
+          const avg   = parseFloat(data.average) || 0;
+          const total = parseInt(data.total)     || 0;
+          document.getElementById('prodRatingText').textContent =
+            avg > 0 ? avg.toFixed(1) : '—';
+          document.getElementById('prodRatingCount').textContent =
+            total > 0 ? '(' + total + ' review' + (total !== 1 ? 's' : '') + ')' : '(No reviews yet)';
+          const starsEl = document.getElementById('prodStars');
+          if (!starsEl || avg <= 0) return;
+          const full = Math.floor(avg), half = (avg - full) >= 0.5 ? 1 : 0, empty = 5 - full - half;
+          starsEl.innerHTML =
+            '<i class="fas fa-star"></i>'.repeat(full) +
+            (half ? '<i class="fas fa-star-half-alt"></i>' : '') +
+            '<i class="far fa-star"></i>'.repeat(empty);
+        }).catch(() => {});
+    })();
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="eng">
+<head>
+  <title>Cart Technilog</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="../stylesheet/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <style>
+    body { background: #f8f9fb; min-height: 100vh; display: flex; flex-direction: column; }
+    body > .h-\[64px\] { flex-shrink: 0; }
+    .page-content { flex: 1; }
+    footer { margin-top: auto; }
+
+    .card {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .section-title {
+      font-weight: 700;
+      font-size: 1rem;
+      color: #1f2937;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .section-title i { color: var(--color-secondary); }
+
+    /* Cart item row */
+    .cart-item {
+      display: flex;
+      gap: 14px;
+      padding: 14px 0;
+      border-bottom: 1px solid #f3f4f6;
+      align-items: flex-start;
+      animation: fadeIn 0.3s ease;
+    }
+    .cart-item:last-child { border-bottom: none; }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
+
+    .cart-item-img {
+      width: 80px;
+      height: 80px;
+      border-radius: 12px;
+      object-fit: cover;
+      background: #e5e7eb;
+      flex-shrink: 0;
+    }
+    .cart-item-img-placeholder {
+      width: 80px;
+      height: 80px;
+      border-radius: 12px;
+      background: #f3f4f6;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #9ca3af;
+      flex-shrink: 0;
+    }
+
+    /* Qty controls */
+    .qty-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .qty-btn {
+      width: 30px;
+      height: 30px;
+      border: 1.5px solid #d1d5db;
+      border-radius: 8px;
+      background: #fff;
+      color: #374151;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+    }
+    .qty-btn:hover {
+      border-color: var(--color-secondary);
+      color: var(--color-secondary);
+      background: #eff6ff;
+    }
+    .qty-display {
+      min-width: 32px;
+      text-align: center;
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: #1f2937;
+    }
+
+    /* Remove btn */
+    .btn-remove {
+      background: none;
+      border: none;
+      color: #9ca3af;
+      font-size: 0.82rem;
+      cursor: pointer;
+      padding: 4px 0;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      transition: color 0.15s;
+    }
+    .btn-remove:hover { color: #ef4444; }
+
+    /* Summary rows */
+    .sum-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.9rem;
+      color: #6b7280;
+      margin-bottom: 6px;
+    }
+    .sum-row.total {
+      font-weight: 700;
+      font-size: 1.05rem;
+      color: #1f2937;
+      border-top: 1px solid #e5e7eb;
+      padding-top: 10px;
+      margin-top: 6px;
+    }
+
+    /* Checkout btn */
+    .btn-checkout {
+      width: 100%;
+      padding: 14px;
+      background: var(--color-primary);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .btn-checkout:hover { opacity: 0.88; }
+    .btn-checkout:disabled {
+      background: #d1d5db;
+      cursor: not-allowed;
+      opacity: 1;
+    }
+
+    /* Empty cart */
+    #emptyCart {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 4rem 2rem;
+      color: #9ca3af;
+      text-align: center;
+    }
+
+    /* Toast */
+    #cartToast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 9999;
+      background: var(--color-primary);
+      color: #fff;
+      padding: 12px 22px;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+      transform: translateY(80px);
+      opacity: 0;
+      transition: all 0.35s cubic-bezier(.4,0,.2,1);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    #cartToast.show { transform: translateY(0); opacity: 1; }
+
+    /* Select all checkbox */
+    input[type="checkbox"] { accent-color: var(--color-primary); }
+  </style>
+</head>
+<body class="page-wrapper">
+<div class="h-[56px] md:h-[64px]"></div>
+
+<!-- HEADER -->
+<header class="fixed top-0 left-0 w-full z-50 shadow-md" style="background-color: var(--color-primary);">
+  <div class="max-w-6xl mx-auto flex items-center h-[56px] px-3 md:px-4 gap-2 md:gap-4">
+    <a href="main.html" class="flex items-center gap-2">
+      <img src="../image/logo.png" alt="Logo" class="h-8 md:h-10 rounded-full flex-shrink-0">
+      <span class="text-white font-bold text-sm md:text-lg tracking-wide">TECHNILOG</span>
+    </a>
+    <div class="hidden sm:block mx-2 h-5 w-px bg-white/30 flex-shrink-0"></div>
+    <span class="text-white font-semibold text-sm md:text-lg truncate hidden sm:flex items-center"><i class="fas fa-shopping-cart mr-1 md:mr-2"></i>My Cart</span>
+    <a href="main.html" class="ml-auto text-white/80 hover:text-white text-xs md:text-sm transition flex-shrink-0 flex items-center gap-1">
+      <i class="fas fa-arrow-left mr-1"></i>Continue Shopping
+    </a>
+  </div>
+</header>
+
+<!-- MAIN CONTENT -->
+<div class="page-content">
+<div class="max-w-6xl mx-auto px-4 py-6">
+  <div class="flex flex-col lg:flex-row gap-6">
+
+    <!-- LEFT: CART ITEMS -->
+    <div class="flex-1">
+      <div class="card">
+        <div class="flex items-center justify-between mb-3">
+          <div class="section-title mb-0"><i class="fas fa-box-open"></i> Cart Items (<span id="itemCount">0</span>)</div>
+          <label class="flex items-center gap-2 text-sm text-gray-500 cursor-pointer select-none">
+            <input type="checkbox" id="selectAll" onchange="toggleSelectAll(this)" class="w-4 h-4">
+            Select All
+          </label>
+        </div>
+
+        <!-- Items list -->
+        <div id="cartItems"></div>
+
+        <!-- Empty state -->
+        <div id="emptyCart">
+          <i class="fas fa-shopping-cart text-6xl mb-4" style="color: var(--color-quarternary);"></i>
+          <div class="font-semibold text-gray-600 text-lg mb-1">Your cart is empty</div>
+          <p class="text-sm text-gray-400 mb-5">Looks like you haven't added anything yet.</p>
+          <a href="main.html" class="px-6 py-2.5 rounded-xl text-white font-semibold text-sm transition hover:opacity-90" style="background: var(--color-primary);">
+            Browse Products
+          </a>
+        </div>
+
+        <!-- Remove selected -->
+        <div id="bulkActions" class="hidden mt-4 pt-4 border-t border-gray-100 flex justify-end">
+          <button onclick="removeSelected()" class="flex items-center gap-2 text-red-500 hover:text-red-700 text-sm font-semibold transition">
+            <i class="fas fa-trash"></i> Remove Selected
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: ORDER SUMMARY -->
+    <div class="w-full lg:w-[340px]">
+      <div class="card sticky top-20">
+        <div class="section-title"><i class="fas fa-receipt"></i> Order Summary</div>
+
+        <div class="sum-row">
+          <span>Items selected</span>
+          <span id="summaryCount">0</span>
+        </div>
+        <div class="sum-row">
+          <span>Subtotal</span>
+          <span id="summarySubtotal">₱0.00</span>
+        </div>
+        <div class="sum-row">
+          <span>Shipping</span>
+          <span class="text-green-600 font-medium">Free</span>
+        </div>
+        <div class="sum-row total">
+          <span>Total</span>
+          <span id="summaryTotal">₱0.00</span>
+        </div>
+
+        <button class="btn-checkout mt-4" id="checkoutBtn" onclick="proceedToCheckout()" disabled>
+          <i class="fas fa-lock mr-2"></i>Proceed to Checkout
+        </button>
+
+        <p class="text-xs text-gray-400 text-center mt-3">
+          <i class="fas fa-shield-alt mr-1"></i>Secure checkout
+        </p>
+      </div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<!-- FOOTER -->
+<footer class="py-4 px-4" style="background-color: var(--color-primary);">
+  <div class="flex flex-col md:flex-row items-center justify-between gap-3">
+    <div class="hidden md:block md:w-1/3"></div>
+    <div class="text-center text-xs text-white/80">© 2026 TECHNILOG. All rights reserved.</div>
+    <div class="flex justify-center md:justify-end gap-5 md:w-1/3">
+      <a href="https://facebook.com" target="_blank" class="text-xl text-white hover:text-[var(--color-tertiary)] transition"><i class="fa-brands fa-facebook"></i></a>
+      <a href="https://instagram.com" target="_blank" class="text-xl text-white hover:text-[var(--color-tertiary)] transition"><i class="fa-brands fa-instagram"></i></a>
+      <a href="https://tiktok.com" target="_blank" class="text-xl text-white hover:text-[var(--color-tertiary)] transition"><i class="fa-brands fa-tiktok"></i></a>
+    </div>
+  </div>
+</footer>
+
+<div id="cartToast"></div>
+<script>
+  let cart = [];
+  let selectedItems = new Set();
+  let _cartKey = 'tl_cart_' + (localStorage.getItem('tl_user_id') || 'guest');
+
+  // ── Load cart ─────────────────────────────────────────────────
+  function loadCart() {
+    cart = JSON.parse(localStorage.getItem(_cartKey) || '[]');
+    renderCart();
+    updateSummary();
+  }
+
+  // ── Render cart items ─────────────────────────────────────────
+  function renderCart() {
+    const container = document.getElementById('cartItems');
+    const emptyEl = document.getElementById('emptyCart');
+    const bulkEl = document.getElementById('bulkActions');
+    const countEl = document.getElementById('itemCount');
+
+    countEl.textContent = cart.reduce((s, i) => s + i.qty, 0);
+
+    if (!cart.length) {
+      container.innerHTML = '';
+      emptyEl.style.display = 'flex';
+      bulkEl.classList.add('hidden');
+      return;
+    }
+
+    emptyEl.style.display = 'none';
+
+    container.innerHTML = cart.map((item, idx) => {
+      const isSelected = selectedItems.has(idx);
+      const imgHtml = item.image
+        ? `<img src="${item.image}" alt="${item.name}" class="cart-item-img">`
+        : `<div class="cart-item-img-placeholder"><i class="fas fa-image text-2xl"></i></div>`;
+
+      return `
+        <div class="cart-item" id="cartItem_${idx}">
+          <input type="checkbox" class="item-checkbox mt-1 w-4 h-4 flex-shrink-0" data-idx="${idx}"
+            ${isSelected ? 'checked' : ''} onchange="toggleItem(${idx}, this)">
+          ${imgHtml}
+          <div class="flex-1 min-w-0">
+            <div class="font-semibold text-gray-800 text-sm leading-tight truncate">${item.name}</div>
+            ${item.variant && item.variant !== 'Standard' ? `<div class="text-xs text-gray-400 mt-0.5">${item.variant}</div>` : ''}
+            <div class="font-bold mt-1" style="color: var(--color-primary);">
+              ₱${parseFloat(item.price).toLocaleString('en-PH', { minimumFractionDigits: 2 })}
+            </div>
+            <div class="qty-controls">
+              <button class="qty-btn" onclick="changeQty(${idx}, -1)"><i class="fas fa-minus text-xs"></i></button>
+              <span class="qty-display" id="qty_${idx}">${item.qty}</span>
+              <button class="qty-btn" onclick="changeQty(${idx}, 1)"><i class="fas fa-plus text-xs"></i></button>
+              <span class="text-xs text-gray-400 ml-1">
+                = ₱<span id="lineTotal_${idx}">${(item.price * item.qty).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+              </span>
+            </div>
+            <button class="btn-remove mt-2" onclick="removeItem(${idx})">
+              <i class="fas fa-trash-alt"></i> Remove
+            </button>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    // Update select all state
+    const allCheckboxes = document.querySelectorAll('.item-checkbox');
+    const selectAll = document.getElementById('selectAll');
+    selectAll.checked = selectedItems.size === cart.length && cart.length > 0;
+    selectAll.indeterminate = selectedItems.size > 0 && selectedItems.size < cart.length;
+
+    bulkEl.classList.toggle('hidden', selectedItems.size === 0);
+  }
+
+  // ── Qty change ────────────────────────────────────────────────
+  function changeQty(idx, delta) {
+    let newQty = cart[idx].qty + delta;
+    if (newQty < 1) newQty = 1;
+    if (newQty > 99) newQty = 99;
+    cart[idx].qty = newQty;
+    saveCart();
+
+    // Update inline without full re-render
+    const qtyEl = document.getElementById(`qty_${idx}`);
+    const totalEl = document.getElementById(`lineTotal_${idx}`);
+    if (qtyEl) qtyEl.textContent = newQty;
+    if (totalEl) totalEl.textContent = (cart[idx].price * newQty).toLocaleString('en-PH', { minimumFractionDigits: 2 });
+
+    document.getElementById('itemCount').textContent = cart.reduce((s, i) => s + i.qty, 0);
+    updateSummary();
+  }
+
+  // ── Remove item ───────────────────────────────────────────────
+  function removeItem(idx) {
+    cart.splice(idx, 1);
+    selectedItems.delete(idx);
+    // Re-index selected
+    const newSelected = new Set();
+    selectedItems.forEach(i => { if (i < idx) newSelected.add(i); else if (i > idx) newSelected.add(i - 1); });
+    selectedItems = newSelected;
+    saveCart();
+    renderCart();
+    updateSummary();
+    showToast('<i class="fas fa-trash-alt"></i> Item removed from cart');
+  }
+
+  // ── Remove selected ───────────────────────────────────────────
+  function removeSelected() {
+    const indices = Array.from(selectedItems).sort((a, b) => b - a);
+    indices.forEach(idx => cart.splice(idx, 1));
+    selectedItems = new Set();
+    saveCart();
+    renderCart();
+    updateSummary();
+    showToast('<i class="fas fa-trash-alt"></i> Selected items removed');
+  }
+
+  // ── Toggle item selection ─────────────────────────────────────
+  function toggleItem(idx, el) {
+    if (el.checked) selectedItems.add(idx);
+    else selectedItems.delete(idx);
+    renderCart();
+    updateSummary();
+  }
+
+  function toggleSelectAll(el) {
+    if (el.checked) {
+      cart.forEach((_, i) => selectedItems.add(i));
+    } else {
+      selectedItems.clear();
+    }
+    renderCart();
+    updateSummary();
+  }
+
+  // ── Update summary ────────────────────────────────────────────
+  function updateSummary() {
+    const selected = Array.from(selectedItems);
+    const count = selected.reduce((s, i) => s + (cart[i]?.qty || 0), 0);
+    const subtotal = selected.reduce((s, i) => s + ((cart[i]?.price || 0) * (cart[i]?.qty || 0)), 0);
+
+    document.getElementById('summaryCount').textContent = count;
+    document.getElementById('summarySubtotal').textContent = '₱' + subtotal.toLocaleString('en-PH', { minimumFractionDigits: 2 });
+    document.getElementById('summaryTotal').textContent = '₱' + subtotal.toLocaleString('en-PH', { minimumFractionDigits: 2 });
+
+    const checkoutBtn = document.getElementById('checkoutBtn');
+    checkoutBtn.disabled = selected.length === 0;
+  }
+
+  // ── Proceed to checkout ───────────────────────────────────────
+  function proceedToCheckout() {
+    const selectedCart = Array.from(selectedItems).map(i => cart[i]);
+    if (!selectedCart.length) return;
+
+    // Save selected items for checkout
+    localStorage.setItem('tl_checkout_items', JSON.stringify(selectedCart));
+    window.location.href = 'checkout.html';
+  }
+
+  // ── Save cart ─────────────────────────────────────────────────
+  function saveCart() {
+    localStorage.setItem(_cartKey, JSON.stringify(cart));
+    // Update badge in any open page (if navigated back)
+    const totalQty = cart.reduce((s, i) => s + i.qty, 0);
+    document.querySelectorAll('.cart-count-badge').forEach(el => {
+      el.textContent = totalQty;
+      el.style.display = totalQty > 0 ? 'flex' : 'none';
+    });
+  }
+
+  // ── Toast ─────────────────────────────────────────────────────
+  function showToast(msg) {
+    const t = document.getElementById('cartToast');
+    t.innerHTML = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+  }
+
+  // ── Init ──────────────────────────────────────────────────────
+  loadCart();
+</script>
+</body>
+</html>

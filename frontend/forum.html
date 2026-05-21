@@ -1,0 +1,1679 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title>Technilog Forum</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="../stylesheet/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <style>
+    .comment-section {
+      display: none;
+    }
+
+    .comment-section.open {
+      display: block;
+      animation: slideDown 0.2s ease;
+    }
+
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-6px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .post-card {
+      transition: box-shadow 0.2s;
+    }
+
+    .post-card:hover {
+      box-shadow: 0 8px 32px rgba(46, 39, 157, 0.13);
+    }
+
+    #postModal {
+      backdrop-filter: blur(3px);
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+
+    .reply-box {
+      display: none;
+    }
+
+    .reply-box.open {
+      display: flex;
+    }
+
+    /* Mobile fixes */
+    @media (max-width: 640px) {
+
+      /* Center notification panel and prevent off-screen overflow */
+      #notifPanel {
+        right: auto !important;
+        transform: none !important;
+        left: 50%;
+        translate: -50% 0;
+        width: calc(100vw - 32px) !important;
+        max-width: 340px;
+      }
+
+      /* Shrink logo text on mobile so search bar gets more room */
+      #mainHeader .tracking-wide {
+        font-size: 1rem;
+      }
+
+      #mainHeader .h-20 {
+        height: 2.25rem;
+      }
+    }
+  </style>
+</head>
+
+<body class="bg-gray-100 min-h-screen flex flex-col">
+  <div class="h-[90px]"></div>
+
+  <!-- HEADER -->
+  <header id="mainHeader" class="fixed top-0 left-0 w-full z-50 shadow-md transition-all duration-300"
+    style="background-color: var(--color-primary);">
+    <div class="max-w-7xl mx-auto flex items-center justify-between h-[90px] px-4">
+      <a href="main.html" class="flex items-center space-x-3 group cursor-pointer transition duration-300">
+        <img src="../image/logo.png" alt="Logo"
+          class="h-20 rounded-full transition duration-300 group-hover:scale-110 group-hover:rotate-3">
+        <span class="text-white font-bold text-3xl tracking-wide transition duration-300">TECHNILOG</span>
+      </a>
+      <div class="flex flex-1 mx-2 md:mx-6 min-w-0">
+        <input id="forumSearch" type="text" placeholder="Search forum posts..."
+          class="w-full px-4 py-2 rounded-lg outline-none bg-white text-black text-sm"
+          oninput="filterPosts(this.value)">
+      </div>
+      <nav class="hidden md:flex space-x-6 text-white">
+        <a href="main.html" class="hover:text-[var(--color-tertiary)]">Home</a>
+        <a href="main.html#about" class="hover:text-[var(--color-tertiary)]">About Us</a>
+        <a href="main.html#contact" class="hover:text-[var(--color-tertiary)]">Contact Us</a>
+      </nav>
+      <div class="ml-4 flex items-center gap-3">
+        <div
+          class="flex items-center gap-2 bg-white/10 rounded-full px-3 py-1.5 cursor-pointer hover:bg-white/20 transition"
+          id="headerUserBlock">
+          <img id="headerAvatar" src="https://ui-avatars.com/api/?name=U&background=4D80E4&color=fff&size=80"
+            class="w-8 h-8 rounded-full object-cover border-2 border-white/50">
+          <span id="headerUsername" class="text-white text-sm font-semibold hidden md:block">User</span>
+        </div>
+      </div>
+      <button id="menu-btn" class="text-white text-2xl ml-4 cursor-pointer relative">
+        <i class="fas fa-bars"></i>
+        <span id="menuTotalBadge"
+          class="absolute -top-2 -right-2 bg-red-500 text-white text-xs px-1 py-0.5 rounded-full"
+          style="display:none;">0</span>
+      </button>
+    </div>
+
+    <!-- Slide Nav -->
+    <div id="mobile-menu" class="fixed top-0 right-[-100%] w-64 h-full shadow-lg transition-all duration-300 z-50 p-5"
+      style="background-color: var(--color-primary);">
+      <div class="flex justify-end">
+        <button id="close-btn" class="text-white text-2xl cursor-pointer"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="flex items-center gap-3 mt-4 mb-2 pb-4 border-b border-white/20">
+        <img id="sidebarAvatar" src="https://ui-avatars.com/api/?name=U&background=4D80E4&color=fff&size=80"
+          class="w-12 h-12 rounded-full object-cover border-2 border-white/40">
+        <div>
+          <p id="sidebarName" class="text-white font-bold text-sm leading-tight">User</p>
+          <p id="sidebarEmail" class="text-white/50 text-xs truncate max-w-[150px]"></p>
+        </div>
+      </div>
+      <nav class="mt-2 flex flex-col space-y-5 text-white text-lg">
+        <div class="text-sm tracking-widest text-white font-semibold border-b border-white/30 pb-2 opacity-80">SECTIONS
+        </div>
+        <a href="main.html" class="flex items-center gap-3 group transition duration-300"><i
+            class="fas fa-home"></i><span class="group-hover:text-[var(--color-tertiary)]">Home</span></a>
+        <a href="../auth/account.html" class="flex items-center gap-3 group transition duration-300"><i
+            class="fas fa-user"></i><span class="group-hover:text-[var(--color-tertiary)]">Account</span></a>
+        <a href="device.html" class="flex items-center gap-3 group transition duration-300"><i
+            class="fas fa-laptop"></i><span class="group-hover:text-[var(--color-tertiary)]">My Device</span></a>
+        <a href="deviceHistory.html" class="flex items-center gap-3 group transition duration-300"><i
+            class="fas fa-history"></i><span class="group-hover:text-[var(--color-tertiary)]">Device History</span></a>
+        <a href="forum.html" class="flex items-center gap-3 group transition duration-300"
+          style="color:var(--color-tertiary);"><i class="fas fa-users"></i><span>Forum</span></a>
+        <a href="deliveries.html" class="flex items-center gap-3 group transition duration-300"><i
+            class="fas fa-receipt"></i><span class="group-hover:text-[var(--color-tertiary)]">Orders</span></a>
+        <a href="messages.html" class="flex items-center gap-3 group transition duration-300"><i
+            class="fas fa-envelope"></i><span class="group-hover:text-[var(--color-tertiary)]">Messages</span><span id="sidebarWarnBadge" style="display:none;background:#dc2626;color:#fff;font-size:10px;font-weight:700;border-radius:999px;padding:1px 6px;margin-left:4px;">!</span></a>
+        <a href="cart.html" class="flex items-center gap-3 group transition duration-300"><i
+            class="fas fa-shopping-cart"></i><span class="group-hover:text-[var(--color-tertiary)]">Cart</span></a>
+        <a id="adminMenuLink" href="../auth/admin-login.html"
+          class="flex items-center gap-3 group transition duration-300" style="display:none;"><i
+            class="fas fa-shield-halved"></i><span class="group-hover:text-[var(--color-tertiary)]">Admin</span></a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- PAGE BODY -->
+  <main class="max-w-3xl mx-auto px-4 py-8 flex-1 w-full">
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-800 flex items-center gap-2">
+          <i class="fas fa-users text-[var(--color-primary)]"></i> Community Forum
+        </h1>
+        <p class="text-sm text-gray-500 mt-0.5">Share ideas, ask questions, help others.</p>
+      </div>
+      <div class="flex items-center gap-2">
+        <!-- Notification Bell -->
+        <div class="relative" id="notifWrap">
+          <button id="notifBtn" onclick="toggleNotifPanel()"
+            class="relative flex items-center justify-center w-10 h-10 rounded-xl border-2 text-gray-500 hover:text-[var(--color-primary)] hover:border-[var(--color-primary)] transition"
+            style="border-color:#e5e7eb;" title="Notifications">
+            <i class="fas fa-bell text-lg"></i>
+            <span id="notifBadge"
+              class="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] font-bold min-w-[18px] h-[18px] flex items-center justify-center rounded-full px-1 shadow"
+              style="display:none;">0</span>
+          </button>
+          <!-- Notification Panel -->
+          <div id="notifPanel"
+            class="hidden absolute top-12 w-80 bg-white rounded-2xl shadow-2xl border border-gray-100 z-[500] overflow-hidden"
+            style="max-height:420px; right: 50%; transform: translateX(50%);">
+            <div class="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+              <span class="font-bold text-gray-800 text-sm">Notifications</span>
+              <button onclick="markAllRead()"
+                class="text-xs text-[var(--color-primary)] hover:underline font-semibold">Mark all read</button>
+            </div>
+            <div id="notifList" class="overflow-y-auto" style="max-height:355px;">
+              <div class="text-center py-8 text-gray-400 text-sm"><i class="fas fa-spinner fa-spin"></i></div>
+            </div>
+          </div>
+        </div>
+        <button onclick="openPostModal()"
+          class="flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-white shadow-md hover:opacity-90 active:scale-95 transition text-sm"
+          style="background-color: var(--color-primary);">
+          <i class="fas fa-plus"></i> New Post
+        </button>
+      </div>
+    </div>
+
+    <!-- Filter tabs -->
+    <div class="flex gap-2 mb-5 flex-wrap">
+      <button onclick="setFilter('all', this)"
+        class="filter-tab px-4 py-1.5 rounded-full text-sm font-semibold border-2 transition"
+        style="border-color:var(--color-primary);background:var(--color-primary);color:#fff;">All Posts</button>
+      <button onclick="setFilter('general', this)"
+        class="filter-tab px-4 py-1.5 rounded-full text-sm font-semibold border-2 border-gray-300 text-gray-600 hover:border-[var(--color-primary)] transition">General</button>
+      <button onclick="setFilter('tips', this)"
+        class="filter-tab px-4 py-1.5 rounded-full text-sm font-semibold border-2 border-gray-300 text-gray-600 hover:border-[var(--color-primary)] transition">Tips
+        &amp; Tricks</button>
+      <button onclick="setFilter('question', this)"
+        class="filter-tab px-4 py-1.5 rounded-full text-sm font-semibold border-2 border-gray-300 text-gray-600 hover:border-[var(--color-primary)] transition">Questions</button>
+      <button onclick="setFilter('review', this)"
+        class="filter-tab px-4 py-1.5 rounded-full text-sm font-semibold border-2 border-gray-300 text-gray-600 hover:border-[var(--color-primary)] transition">Reviews</button>
+      <button onclick="setFilter('mine', this)" id="myPostsBtn"
+        class="filter-tab px-4 py-1.5 rounded-full text-sm font-semibold border-2 border-gray-300 text-gray-600 hover:border-[var(--color-primary)] transition flex items-center gap-1.5">
+        <i class="fas fa-user-circle"></i> My Posts
+      </button>
+    </div>
+
+    <div id="forumFeed" class="flex flex-col gap-4"></div>
+
+    <div id="emptyState" class="hidden text-center py-20 text-gray-400">
+      <i id="emptyIcon" class="fas fa-comments text-5xl mb-4 block"></i>
+      <p id="emptyTitle" class="text-lg font-semibold">No posts yet</p>
+      <p id="emptySubtitle" class="text-sm mt-1">Be the first to start a discussion!</p>
+    </div>
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="py-3 px-6 flex items-center justify-between" style="background-color: var(--color-primary);">
+    <div class="w-1/3"></div>
+    <div class="w-1/3 text-center text-xs text-white">© 2026 TECHNILOG. All rights reserved.</div>
+    <div class="w-1/3 flex justify-end gap-5 pr-10">
+      <a href="https://facebook.com" target="_blank"
+        class="text-2xl text-white hover:text-[var(--color-tertiary)] transition"><i
+          class="fa-brands fa-facebook"></i></a>
+      <a href="https://instagram.com" target="_blank"
+        class="text-2xl text-white hover:text-[var(--color-tertiary)] transition"><i
+          class="fa-brands fa-instagram"></i></a>
+      <a href="https://tiktok.com" target="_blank"
+        class="text-2xl text-white hover:text-[var(--color-tertiary)] transition"><i
+          class="fa-brands fa-tiktok"></i></a>
+    </div>
+  </footer>
+
+  <!-- NEW POST MODAL -->
+  <div id="postModal" class="fixed inset-0 z-[999] flex items-center justify-center bg-black/50 hidden px-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 relative">
+      <button onclick="closePostModal()"
+        class="absolute top-4 right-4 text-gray-400 hover:text-gray-700 text-xl transition"><i
+          class="fas fa-times"></i></button>
+      <div class="flex items-center gap-3 mb-4">
+        <img id="modalAvatar" src="https://ui-avatars.com/api/?name=U&background=4D80E4&color=fff&size=80"
+          class="w-11 h-11 rounded-full object-cover border-2 border-[var(--color-primary)]/30">
+        <div>
+          <p id="modalUsername" class="font-bold text-gray-800 text-sm">User</p>
+          <p class="text-xs text-gray-400">Posting publicly to the forum</p>
+        </div>
+      </div>
+      <h2 class="text-lg font-bold text-gray-800 mb-4">Create a Post</h2>
+      <div class="mb-3">
+        <input id="postTitle" type="text" maxlength="120" placeholder="Post title (required)"
+          class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]">
+      </div>
+      <div class="mb-3">
+        <select id="postTag"
+          class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] text-gray-600">
+          <option value="general">General</option>
+          <option value="tips">Tips &amp; Tricks</option>
+          <option value="question">Question</option>
+          <option value="review">Review</option>
+        </select>
+      </div>
+      <div class="mb-4">
+        <textarea id="postBody" maxlength="1000"
+          placeholder="What's on your mind? Share your thoughts, questions, or tips…"
+          class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"></textarea>
+        <p class="text-xs text-gray-400 text-right mt-1"><span id="charCount">0</span>/1000</p>
+      </div>
+      <div class="mb-3">
+        <div class="flex items-center gap-2 text-sm text-gray-500 mb-2">
+          <i class="fas fa-photo-film"></i>
+          <span>Attach up to 5 photos/videos</span>
+          <span id="imgCounter" class="text-xs font-semibold text-[var(--color-primary)]">(0 / 5)</span>
+          <label for="postMedia" id="addPhotoBtn" class="ml-auto cursor-pointer px-3 py-1 rounded-lg border border-dashed border-gray-300 text-xs hover:bg-gray-50 transition">+ Add media</label>
+        </div>
+        <input type="file" id="postMedia" accept="image/*,video/*" multiple class="hidden">
+        <div id="postMediaPreview" class="mt-2 flex flex-wrap gap-2"></div>
+      </div>
+      <p id="postError" class="text-red-500 text-xs mb-3 hidden">Please fill in the title and body.</p>
+      <button onclick="submitPost()"
+        class="w-full py-2.5 rounded-xl font-bold text-white shadow hover:opacity-90 active:scale-95 transition"
+        style="background-color: var(--color-primary);">
+        <i class="fas fa-paper-plane mr-1"></i> Post
+      </button>
+    </div>
+  </div>
+
+  <!-- PROFILE MODAL -->
+  <div id="profileModal" class="fixed inset-0 z-[1000] flex items-center justify-center bg-black/50 hidden px-4"
+    style="backdrop-filter:blur(3px);">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 relative">
+      <button onclick="closeProfileModal()"
+        class="absolute top-4 right-4 text-gray-400 hover:text-gray-700 text-xl transition"><i
+          class="fas fa-times"></i></button>
+      <div id="profileModalBody" class="text-center"><i class="fas fa-spinner fa-spin text-2xl text-gray-400"></i></div>
+    </div>
+  </div>
+
+
+  <!-- REPORT MODAL -->
+  <div id="reportModal" class="fixed inset-0 z-[1100] flex items-center justify-center bg-black/50 hidden px-4" style="backdrop-filter:blur(3px);">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 relative">
+      <button onclick="closeReportModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-700 text-xl transition"><i class="fas fa-times"></i></button>
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-10 h-10 rounded-full flex items-center justify-center" style="background:#fef2f2;">
+          <i class="fas fa-flag text-red-500"></i>
+        </div>
+        <div>
+          <h2 class="text-lg font-bold text-gray-800">Report Post</h2>
+          <p class="text-xs text-gray-400">Help keep Technilog safe and respectful.</p>
+        </div>
+      </div>
+      <p class="text-sm font-semibold text-gray-700 mb-3">Why are you reporting this post?</p>
+      <div class="flex flex-col gap-2 mb-4" id="reportReasons">
+        <label class="report-reason-label flex items-center gap-3 p-3 rounded-xl border-2 border-gray-200 cursor-pointer hover:border-red-400 transition has-[:checked]:border-red-500 has-[:checked]:bg-red-50">
+          <input type="radio" name="reportReason" value="Spam" class="accent-red-500"> <span class="text-sm text-gray-700">Spam</span>
+        </label>
+        <label class="report-reason-label flex items-center gap-3 p-3 rounded-xl border-2 border-gray-200 cursor-pointer hover:border-red-400 transition has-[:checked]:border-red-500 has-[:checked]:bg-red-50">
+          <input type="radio" name="reportReason" value="Harassment or Bullying" class="accent-red-500"> <span class="text-sm text-gray-700">Harassment or Bullying</span>
+        </label>
+        <label class="report-reason-label flex items-center gap-3 p-3 rounded-xl border-2 border-gray-200 cursor-pointer hover:border-red-400 transition has-[:checked]:border-red-500 has-[:checked]:bg-red-50">
+          <input type="radio" name="reportReason" value="Hate Speech" class="accent-red-500"> <span class="text-sm text-gray-700">Hate Speech</span>
+        </label>
+        <label class="report-reason-label flex items-center gap-3 p-3 rounded-xl border-2 border-gray-200 cursor-pointer hover:border-red-400 transition has-[:checked]:border-red-500 has-[:checked]:bg-red-50">
+          <input type="radio" name="reportReason" value="Misinformation" class="accent-red-500"> <span class="text-sm text-gray-700">Misinformation</span>
+        </label>
+        <label class="report-reason-label flex items-center gap-3 p-3 rounded-xl border-2 border-gray-200 cursor-pointer hover:border-red-400 transition has-[:checked]:border-red-500 has-[:checked]:bg-red-50">
+          <input type="radio" name="reportReason" value="Inappropriate Content" class="accent-red-500"> <span class="text-sm text-gray-700">Inappropriate Content</span>
+        </label>
+        <label class="report-reason-label flex items-center gap-3 p-3 rounded-xl border-2 border-gray-200 cursor-pointer hover:border-red-400 transition has-[:checked]:border-red-500 has-[:checked]:bg-red-50">
+          <input type="radio" name="reportReason" value="Scam or Fraud" class="accent-red-500"> <span class="text-sm text-gray-700">Scam or Fraud</span>
+        </label>
+        <label class="report-reason-label flex items-center gap-3 p-3 rounded-xl border-2 border-gray-200 cursor-pointer hover:border-red-400 transition has-[:checked]:border-red-500 has-[:checked]:bg-red-50">
+          <input type="radio" name="reportReason" value="Violence or Threats" class="accent-red-500"> <span class="text-sm text-gray-700">Violence or Threats</span>
+        </label>
+        <label class="report-reason-label flex items-center gap-3 p-3 rounded-xl border-2 border-gray-200 cursor-pointer hover:border-red-400 transition has-[:checked]:border-red-500 has-[:checked]:bg-red-50">
+          <input type="radio" name="reportReason" value="Other" class="accent-red-500"> <span class="text-sm text-gray-700">Other</span>
+        </label>
+      </div>
+      <p id="reportError" class="text-red-500 text-xs mb-3 hidden">Please select a reason.</p>
+      <button onclick="submitReport()"
+        class="w-full py-2.5 rounded-xl font-bold text-white shadow hover:opacity-90 active:scale-95 transition"
+        style="background:#ef4444;">
+        <i class="fas fa-flag mr-1"></i> Submit Report
+      </button>
+    </div>
+  </div>
+  <!-- Image Viewer Modal (Swipeable Lightbox) -->
+  <div id="imgViewerModal" class="fixed inset-0 z-[2000] hidden"
+    style="background:rgba(0,0,0,0.92); backdrop-filter:blur(8px);">
+
+    <!-- Close button -->
+    <button id="imgViewerClose"
+      class="absolute top-4 right-4 text-white text-3xl hover:text-gray-300 transition z-20"
+      style="line-height:1; background:rgba(0,0,0,0.4); border-radius:50%; width:44px; height:44px; display:flex; align-items:center; justify-content:center;">
+      <i class="fas fa-times" style="font-size:18px;"></i>
+    </button>
+
+    <!-- Counter -->
+    <div id="imgViewerCounter"
+      class="absolute top-4 left-4 text-white text-sm font-semibold z-20 px-3 py-1 rounded-full"
+      style="background:rgba(0,0,0,0.45);">1 / 1</div>
+
+    <!-- Prev button -->
+    <button id="imgViewerPrev"
+      class="absolute left-3 top-1/2 -translate-y-1/2 z-20 text-white flex items-center justify-center transition"
+      style="background:rgba(255,255,255,0.15); border-radius:50%; width:44px; height:44px; backdrop-filter:blur(4px);">
+      <i class="fas fa-chevron-left"></i>
+    </button>
+
+    <!-- Next button -->
+    <button id="imgViewerNext"
+      class="absolute right-3 top-1/2 -translate-y-1/2 z-20 text-white flex items-center justify-center transition"
+      style="background:rgba(255,255,255,0.15); border-radius:50%; width:44px; height:44px; backdrop-filter:blur(4px);">
+      <i class="fas fa-chevron-right"></i>
+    </button>
+
+    <!-- Media stage -->
+    <div id="imgViewerStage"
+      class="absolute inset-0 flex items-center justify-center"
+      style="padding: 60px 60px;">
+      <!-- Media injected by JS -->
+    </div>
+
+    <!-- Dot indicators -->
+    <div id="imgViewerDots"
+      class="absolute bottom-5 left-0 right-0 flex justify-center gap-2 z-20">
+    </div>
+  </div>
+
+  <script src="../js/menu.js"></script>
+  <script>
+    const API = '../backend/';
+
+    /* ─────────────────────────────────────────
+       AVATAR HELPER
+       profile_pic from DB is stored as a path like
+       "uploads/profiles/xxx.jpg"  (relative to project root)
+       The frontend is in /frontend/ so we prepend "../"
+       If it already starts with http or data: use as-is.
+    ───────────────────────────────────────── */
+    function resolveAvatar(profilePic, name) {
+      if (!profilePic || profilePic.trim() === '') {
+        return 'https://ui-avatars.com/api/?name=' + encodeURIComponent(name || 'U') + '&background=4D80E4&color=fff&size=80';
+      }
+      if (profilePic.startsWith('http') || profilePic.startsWith('data:') || profilePic.startsWith('blob:')) {
+        return profilePic;
+      }
+      // Relative path from DB — go up one level from /frontend/
+      return '../' + profilePic.replace(/^\.\.\//, '');
+    }
+
+    /* ─────────────────────────────────────────
+       CURRENT USER
+    ───────────────────────────────────────── */
+    let currentUser = { id: '', name: '', email: '', avatar: '', role: 'user' };
+
+    async function initUser() {
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 5000); // 5s timeout
+        const res = await fetch(API + 'check_session.php', { signal: controller.signal });
+        clearTimeout(timeout);
+        const data = await res.json();
+        const u = data.user || ((data.success || data.logged_in) ? data : null);
+        if (u && (u.user_id || u.id)) {
+          currentUser = {
+            id: String(u.user_id || u.id || ''),
+            name: u.fullname || u.username || '',
+            email: u.email || '',
+            avatar: resolveAvatar(u.profile_pic, u.fullname || u.username),
+            role: u.role || 'user'
+          };
+        }
+      } catch (_) { }
+
+      // Fallback: localStorage
+      if (!currentUser.id) {
+        const email = localStorage.getItem('tl_user_email') || '';
+        let pic = '';
+        try {
+          const p = JSON.parse(localStorage.getItem('tl_profile_' + email) || '{}');
+          pic = p.avatar || p.profile_pic || '';
+        } catch (_) { }
+        currentUser = {
+          id: localStorage.getItem('tl_user_id') || '',
+          name: localStorage.getItem('tl_name') || '',
+          email,
+          avatar: pic || resolveAvatar('', localStorage.getItem('tl_name') || ''),
+          role: localStorage.getItem('tl_role') || 'user'
+        };
+      }
+
+      // Populate header
+      const av = currentUser.avatar;
+      document.getElementById('headerUsername').textContent = currentUser.name || 'User';
+      setImgSrc(document.getElementById('headerAvatar'), av, currentUser.name);
+      const sn = document.getElementById('sidebarName');
+      const se = document.getElementById('sidebarEmail');
+      const sa = document.getElementById('sidebarAvatar');
+      if (sn) sn.textContent = currentUser.name || 'User';
+      if (se) se.textContent = currentUser.email || '';
+      if (sa) setImgSrc(sa, av, currentUser.name);
+      const adminLink = document.getElementById('adminMenuLink');
+      if (adminLink && currentUser.role === 'admin') adminLink.style.display = 'flex';
+    }
+
+    // Set img src with fallback on error
+    function setImgSrc(imgEl, src, name) {
+      if (!imgEl) return;
+      imgEl.src = src;
+      imgEl.onerror = function () {
+        this.onerror = null;
+        this.src = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(name || 'U') + '&background=4D80E4&color=fff&size=80';
+      };
+    }
+
+    /* ─────────────────────────────────────────
+       STATE
+    ───────────────────────────────────────── */
+    let allPosts = [];
+    let likedPostIds = new Set();
+    let likedCommentIds = new Set();
+    let activeFilter = 'all';
+    let activeSearch = '';
+
+    const TAG_COLORS = {
+      general: 'bg-blue-100 text-blue-700',
+      tips: 'bg-purple-100 text-purple-700',
+      question: 'bg-yellow-100 text-yellow-700',
+      review: 'bg-green-100 text-green-700'
+    };
+    const TAG_LABELS = { general: 'General', tips: 'Tips & Tricks', question: 'Question', review: 'Review' };
+
+    function timeAgo(dtStr) {
+      const diff = Math.floor((Date.now() - new Date(dtStr)) / 1000);
+      if (diff < 60) return 'just now';
+      if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+      if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+      return Math.floor(diff / 86400) + 'd ago';
+    }
+    function escHtml(str) {
+      return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    /* ─────────────────────────────────────────
+       FETCH POSTS
+    ───────────────────────────────────────── */
+
+    function renderPostMedia(path, type) {
+      if (!path) return '';
+
+      var items = [];
+
+      function toItem(raw) {
+        // raw can be a string path or a {path, type} object
+        if (typeof raw === 'string') {
+          return { path: raw, type: /\.(mp4|webm|ogg|mov|avi|mkv)$/i.test(raw) ? 'video' : 'image' };
+        }
+        if (raw && typeof raw === 'object') {
+          var p = raw.path;
+          // Handle double-nested objects
+          if (typeof p === 'object' && p !== null) p = p.path || '';
+          p = String(p || '');
+          return { path: p, type: String(raw.type || (/\.(mp4|webm|ogg|mov|avi|mkv)$/i.test(p) ? 'video' : 'image')) };
+        }
+        return null;
+      }
+
+      try {
+        if (type === 'mixed' || (typeof path === 'string' && path.trim().startsWith('['))) {
+          var parsed = JSON.parse(path);
+          items = parsed.map(toItem).filter(function(i) { return i && i.path; });
+        } else if (type === 'video') {
+          items = [{ path: String(path), type: 'video' }];
+        } else if (type === 'image') {
+          items = [{ path: String(path), type: 'image' }];
+        } else {
+          var sp = String(path);
+          items = [{ path: sp, type: /\.(mp4|webm|ogg|mov|avi|mkv)$/i.test(sp) ? 'video' : 'image' }];
+        }
+      } catch(e) {
+        console.warn('[renderPostMedia] error:', e, 'path:', path);
+        items = [];
+      }
+
+      if (!items.length) return '';
+      return buildMediaGrid(items);
+    }
+
+    // Resolve media URL: works from /frontend/ folder, going up one level to project root
+    function resolveMediaUrl(path) {
+      if (!path) return '';
+      // Ensure it's a string (could be an object if JSON parsing went wrong)
+      if (typeof path !== 'string') path = String(path);
+      if (path.startsWith('http') || path.startsWith('data:') || path.startsWith('blob:')) return path;
+      // Remove any accidental leading '../' to avoid double-prefix
+      var clean = path.replace(/^(\.\.\/)+/, '');
+      return '../' + clean;
+    }
+
+    // Called when a post image fails to load
+    function onImgError(el) {
+      el.style.opacity = '0.3';
+      el.style.cursor = 'default';
+      el.onclick = null;
+    }
+
+    function buildMediaGrid(items) {
+      var count = items.length;
+      var wrapper = 'margin-bottom:12px;border-radius:12px;overflow:hidden;background:#1f2937;';
+
+      // Encode items array to pass to lightbox
+      var itemsJson = encodeURIComponent(JSON.stringify(items.map(function(i){ return {path: resolveMediaUrl(i.path), type: i.type}; })));
+
+      // Helper to render a single media item
+      function mediaEl(item, style, idx) {
+        var u = resolveMediaUrl(item.path);
+        if (item.type === 'video') {
+          return '<video src="' + u + '" style="' + style + 'object-fit:cover;display:block;" controls preload="metadata"></video>';
+        }
+        return '<img src="' + u + '" style="' + style + 'object-fit:cover;display:block;cursor:zoom-in;" onclick="openLightbox(' + idx + ', decodeURIComponent(\'' + itemsJson + '\'))" alt="post image" onerror="onImgError(this)">';
+      }
+
+      // Facebook-style grid layouts
+      if (count === 1) {
+        return '<div style="' + wrapper + '">' + mediaEl(items[0], 'width:100%;max-height:400px;', 0) + '</div>';
+      }
+
+      if (count === 2) {
+        return '<div style="' + wrapper + 'display:flex;gap:2px;">'
+          + '<div style="flex:1;">' + mediaEl(items[0], 'width:100%;height:250px;', 0) + '</div>'
+          + '<div style="flex:1;">' + mediaEl(items[1], 'width:100%;height:250px;', 1) + '</div>'
+          + '</div>';
+      }
+
+      if (count === 3) {
+        return '<div style="' + wrapper + 'display:flex;gap:2px;">'
+          + '<div style="flex:1.5;">' + mediaEl(items[0], 'width:100%;height:300px;', 0) + '</div>'
+          + '<div style="flex:1;display:flex;flex-direction:column;gap:2px;">'
+          +   '<div style="flex:1;">' + mediaEl(items[1], 'width:100%;height:149px;', 1) + '</div>'
+          +   '<div style="flex:1;">' + mediaEl(items[2], 'width:100%;height:149px;', 2) + '</div>'
+          + '</div>'
+          + '</div>';
+      }
+
+      if (count === 4) {
+        return '<div style="' + wrapper + 'display:grid;grid-template-columns:1fr 1fr;gap:2px;">'
+          + items.map(function(item, idx) { return '<div>' + mediaEl(item, 'width:100%;height:180px;', idx) + '</div>'; }).join('')
+          + '</div>';
+      }
+
+      // 5+ items: show first 4, "+N more" overlay on 4th
+      var extra = count - 4;
+      var topFour = items.slice(0, 4);
+      var html = '<div style="' + wrapper + 'display:grid;grid-template-columns:1fr 1fr;gap:2px;">'
+        + topFour.slice(0, 3).map(function(item, idx) {
+            return '<div>' + mediaEl(item, 'width:100%;height:180px;', idx) + '</div>';
+          }).join('');
+      var u4 = resolveMediaUrl(topFour[3].path);
+      html += '<div style="position:relative;cursor:pointer;" onclick="openLightbox(3, decodeURIComponent(\'' + itemsJson + '\'))">'
+        + '<img src="' + u4 + '" style="width:100%;height:180px;object-fit:cover;display:block;" alt="post image" onerror="onImgError(this)">'
+        + '<div style="position:absolute;inset:0;background:rgba(0,0,0,0.55);display:flex;align-items:center;justify-content:center;font-size:1.6rem;font-weight:700;color:#fff;">+' + extra + '</div>'
+        + '</div>';
+      html += '</div>';
+      return html;
+    }
+
+    // "See more / See less" for long post content
+    const SEE_MORE_LIMIT = 300; // characters before truncating
+    function renderContent(postId, content) {
+      if (!content || content.length <= SEE_MORE_LIMIT) {
+        return '<p class="text-sm text-gray-600 leading-relaxed mb-4 whitespace-pre-wrap">' + escHtml(content) + '</p>';
+      }
+      var truncated = escHtml(content.slice(0, SEE_MORE_LIMIT));
+      var full      = escHtml(content);
+      return `
+        <div class="mb-4">
+          <div id="content-short-${postId}">
+            <p class="text-sm text-gray-600 leading-relaxed whitespace-pre-wrap">${truncated}<span class="text-gray-400">…</span></p>
+            <button onclick="toggleContent(${postId})" class="text-[var(--color-primary)] font-semibold text-xs hover:underline mt-0.5">See more...</button>
+          </div>
+          <div id="content-full-${postId}" class="hidden">
+            <p class="text-sm text-gray-600 leading-relaxed whitespace-pre-wrap">${full}</p>
+            <button onclick="toggleContent(${postId})" class="text-[var(--color-primary)] font-semibold text-xs hover:underline mt-0.5">See less...</button>
+          </div>
+        </div>`;
+    }
+    function toggleContent(postId) {
+      var short = document.getElementById('content-short-' + postId);
+      var full  = document.getElementById('content-full-'  + postId);
+      if (!short || !full) return;
+      short.classList.toggle('hidden');
+      full.classList.toggle('hidden');
+    }
+
+    async function fetchPosts() {
+      const feed = document.getElementById('forumFeed');
+      const empty = document.getElementById('emptyState');
+      feed.innerHTML = '<div class="text-center py-12 text-gray-400"><i class="fas fa-spinner fa-spin text-3xl mb-3 block"></i><p class="text-sm">Loading posts...</p></div>';
+      empty.classList.add('hidden');
+
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 20000); // 20s timeout
+        console.log('[fetchPosts] fetching...');
+        const postsRes = await fetch(API + 'get_forum_posts.php', { signal: controller.signal });
+        clearTimeout(timeout);
+        console.log('[fetchPosts] response status:', postsRes.status);
+        const postsData = await postsRes.json();
+        console.log('[fetchPosts] data:', postsData);
+        allPosts = postsData.success ? (postsData.posts || []) : [];
+        if (!postsData.success) {
+          console.error('[fetchPosts] server error:', postsData.message);
+        }
+      } catch (e) {
+        feed.innerHTML = '<div class="text-center py-12 text-red-400"><i class="fas fa-exclamation-circle text-3xl mb-3 block"></i><p class="text-sm">Failed to load posts: ' + e.message + '</p><p class="text-xs mt-2 text-gray-400">Open DevTools (F12) → Console for details.</p></div>';
+        console.error('[fetchPosts] error:', e);
+        return;
+      }
+
+      // Render posts immediately
+      renderFeed();
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    /* ─────────────────────────────────────────
+       RENDER FEED
+    ───────────────────────────────────────── */
+    function renderFeed() {
+      const feed = document.getElementById('forumFeed');
+      const empty = document.getElementById('emptyState');
+
+      let posts = allPosts.slice();
+      if (activeFilter === 'mine') {
+        posts = posts.filter(p => String(p.user_id) === String(currentUser.id));
+      } else if (activeFilter !== 'all') {
+        posts = posts.filter(p => p.tag === activeFilter);
+      }
+      if (activeSearch.trim()) {
+        const q = activeSearch.toLowerCase();
+        posts = posts.filter(p =>
+          (p.title || '').toLowerCase().includes(q) ||
+          (p.content || '').toLowerCase().includes(q) ||
+          (p.fullname || p.username || '').toLowerCase().includes(q)
+        );
+      }
+
+      if (!posts.length) {
+        feed.innerHTML = '';
+        const icon = document.getElementById('emptyIcon');
+        const title = document.getElementById('emptyTitle');
+        const subtitle = document.getElementById('emptySubtitle');
+        if (activeFilter === 'mine') {
+          if (icon) icon.className = 'fas fa-user-circle text-5xl mb-4 block';
+          if (title) title.textContent = "You haven't posted yet";
+          if (subtitle) subtitle.textContent = 'Click "New Post" to share something!';
+        } else {
+          if (icon) icon.className = 'fas fa-comments text-5xl mb-4 block';
+          if (title) title.textContent = 'No posts yet';
+          if (subtitle) subtitle.textContent = 'Be the first to start a discussion!';
+        }
+        empty.classList.remove('hidden');
+        return;
+      }
+      empty.classList.add('hidden');
+      feed.innerHTML = posts.map(buildCard).join('');
+    }
+
+    /* ─────────────────────────────────────────
+       BUILD POST CARD
+    ───────────────────────────────────────── */
+    function buildCard(p) {
+      const authorName = p.fullname || p.username || 'Unknown';
+      const authorAv = resolveAvatar(p.profile_pic, authorName);
+      const tag = p.tag || 'general';
+      const tagColor = TAG_COLORS[tag] || 'bg-gray-100 text-gray-600';
+      const tagLabel = TAG_LABELS[tag] || tag;
+      const cmtCount = parseInt(p.comment_count) || 0;
+      const likeCount = parseInt(p.like_count) || 0;
+      const isLiked = likedPostIds.has(String(p.post_id));
+      const isAuthor = String(currentUser.id) === String(p.user_id);
+      const canDelete = isAuthor || (currentUser.role === 'admin' && p.role !== 'admin');
+
+      const adminBadge = p.role === 'admin'
+        ? '<span class="inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full ml-1" style="background-color:#46B3E6;color:#fff;"><i class="fas fa-star text-[10px]"></i> Admin</span>'
+        : '';
+
+      const deleteBtn = canDelete
+        ? `<button onclick="deletePost(${p.post_id})" class="ml-auto text-gray-300 hover:text-red-400 transition text-sm" title="Delete post"><i class="fas fa-trash-alt"></i></button>`
+        : '';
+
+      const likeClass = isLiked
+        ? 'flex items-center gap-1.5 text-sm font-semibold text-red-500 hover:text-red-400 transition post-like-btn'
+        : 'flex items-center gap-1.5 text-sm font-semibold text-gray-500 hover:text-red-400 transition post-like-btn';
+      const heartIcon = (isLiked ? 'fas' : 'far') + ' fa-heart';
+
+      const myAv = currentUser.avatar || resolveAvatar('', currentUser.name);
+
+      return `
+  <div class="post-card bg-white rounded-2xl shadow p-5" id="post-${p.post_id}">
+    <div class="flex items-center gap-3 mb-3">
+      <img src="${escHtml(authorAv)}" class="w-10 h-10 rounded-full object-cover border-2 border-[var(--color-primary)]/20 cursor-pointer flex-shrink-0"
+        onerror="this.src='${escHtml(resolveAvatar('', authorName))}'"
+        onclick="openProfileModal(${p.user_id})" title="View profile">
+      <div class="flex-1 min-w-0">
+        <p class="font-bold text-gray-800 text-sm leading-tight flex items-center flex-wrap gap-1">
+          <span class="cursor-pointer hover:underline" onclick="openProfileModal(${p.user_id})">${escHtml(authorName)}</span>
+          ${adminBadge}
+        </p>
+        <p class="text-xs text-gray-400">${timeAgo(p.created_at)}</p>
+      </div>
+      <span class="text-xs font-semibold px-3 py-1 rounded-full flex-shrink-0 ${tagColor}">${tagLabel}</span>
+      ${deleteBtn}
+    </div>
+    <h3 class="font-bold text-gray-900 text-base mb-1">${escHtml(p.title)}</h3>
+    ${renderContent(p.post_id, p.content)}
+    ${renderPostMedia(p.media_path, p.media_type)}
+    <div class="flex items-center gap-4 border-t border-gray-100 pt-3">
+      <button onclick="likePost(${p.post_id})" id="likeBtn-${p.post_id}" class="${likeClass}">
+        <i id="likeIcon-${p.post_id}" class="${heartIcon} text-base"></i>
+        <span id="likeCount-${p.post_id}">${likeCount}</span>
+      </button>
+      <button onclick="toggleComments(${p.post_id})" class="flex items-center gap-1.5 text-sm font-semibold text-gray-500 hover:text-[var(--color-primary)] transition" id="cmtToggle-${p.post_id}">
+        <i class="far fa-comment-dots text-base"></i>
+        <span id="cmtCount-${p.post_id}">${cmtCount} Comment${cmtCount !== 1 ? 's' : ''}</span>
+      </button>
+      ${!isAuthor && p.role !== 'admin' ? `<button onclick="openReportModal(${p.post_id},${p.user_id})" class="ml-auto flex items-center gap-1.5 text-sm font-semibold text-gray-400 hover:text-red-500 transition" title="Report this post"><i class="fas fa-flag text-base"></i> <span class="text-xs">Report</span></button>` : ''}
+    </div>
+    <!-- COMMENT SECTION -->
+    <div class="comment-section mt-3" id="comments-${p.post_id}">
+      <div class="border-t border-gray-100 pt-3">
+        <div id="cmtList-${p.post_id}"></div>
+        <!-- Write a comment -->
+        <div class="flex gap-2.5 mt-4 items-start">
+          <img src="${escHtml(myAv)}" class="w-8 h-8 rounded-full object-cover flex-shrink-0 border border-gray-200 mt-1"
+            onerror="this.src='${escHtml(resolveAvatar('', currentUser.name))}'" >
+          <div class="flex-1 flex flex-col gap-1">
+            <div class="flex gap-2 items-center">
+              <input type="text" id="cmtInput-${p.post_id}" placeholder="Write a comment…"
+                class="flex-1 border border-gray-300 rounded-full px-4 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                onkeydown="if(event.key==='Enter') submitComment(${p.post_id}, ${p.user_id}, '${encodeURIComponent(p.title || '')}')">
+              <button onclick="submitComment(${p.post_id}, ${p.user_id}, '${encodeURIComponent(p.title || '')}')"
+                class="w-9 h-9 rounded-full flex items-center justify-center text-white hover:opacity-90 active:scale-95 transition flex-shrink-0"
+                style="background-color:var(--color-primary);" title="Send">
+                <i class="fas fa-paper-plane text-sm"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+    }
+
+    /* ─────────────────────────────────────────
+       COMMENTS  (load / render / submit)
+    ───────────────────────────────────────── */
+    async function toggleComments(postId) {
+      const section = document.getElementById('comments-' + postId);
+      if (!section) return;
+      if (section.classList.contains('open')) {
+        section.classList.remove('open');
+        return;
+      }
+      section.classList.add('open');
+      await loadComments(postId);
+    }
+
+    async function loadComments(postId) {
+      const list = document.getElementById('cmtList-' + postId);
+      if (!list) return;
+      list.innerHTML = '<div class="text-center text-gray-400 text-sm py-3"><i class="fas fa-spinner fa-spin"></i> Loading…</div>';
+
+      try {
+        // Load comments and liked-comment IDs in parallel
+        const fetches = [fetch(API + 'get_forum_comments.php?post_id=' + postId)];
+        if (currentUser.id) {
+          fetches.push(fetch(API + 'get_liked_comments.php?user_id=' + currentUser.id));
+        }
+        const results = await Promise.all(fetches);
+        const data = await results[0].json();
+        if (results[1]) {
+          try {
+            const ld = await results[1].json();
+            likedCommentIds = new Set((ld.liked_comment_ids || []).map(String));
+          } catch (_) { }
+        }
+
+        if (!data.success || !data.comments || !data.comments.length) {
+          list.innerHTML = '<p class="text-xs text-gray-400 text-center py-3">No comments yet. Be the first!</p>';
+          return;
+        }
+        list.innerHTML = data.comments.map(c => buildCommentHtml(c, postId)).join('');
+      } catch (e) {
+        list.innerHTML = '<p class="text-xs text-red-400 text-center py-3">Failed to load comments.</p>';
+      }
+    }
+
+    function buildCommentHtml(c, postId) {
+      const cName = c.fullname || c.username || 'Unknown';
+      const cAv = resolveAvatar(c.profile_pic, cName);
+      const isLiked = likedCommentIds.has(String(c.comment_id));
+      const lCount = parseInt(c.like_count) || 0;
+      const indent = c.parent_comment_id ? 'ml-8' : '';
+
+      const adminBadge = c.role === 'admin'
+        ? '<span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full ml-1" style="background-color:#46B3E6;color:#fff;"><i class="fas fa-star"></i> Admin</span>'
+        : '';
+
+      const likeIconClass = (isLiked ? 'fas' : 'far') + ' fa-heart';
+      const likeTextClass = isLiked ? 'text-red-500' : 'text-gray-400 hover:text-red-400';
+
+      return `
+  <div class="flex gap-2.5 mt-3 ${indent}" id="comment-${c.comment_id}">
+    <img src="${escHtml(cAv)}" class="w-8 h-8 rounded-full object-cover flex-shrink-0 border border-gray-200 cursor-pointer mt-0.5"
+      onerror="this.src='${escHtml(resolveAvatar('', cName))}'"
+      onclick="openProfileModal(${c.user_id})" title="View profile">
+    <div class="flex-1 min-w-0">
+      <div class="bg-gray-100 rounded-2xl px-4 py-2.5">
+        <p class="text-xs font-bold text-gray-700 flex items-center flex-wrap gap-1 mb-1">
+          <span class="cursor-pointer hover:underline" onclick="openProfileModal(${c.user_id})">${escHtml(cName)}</span>
+          ${adminBadge}
+          <span class="font-normal text-gray-400 ml-1">${timeAgo(c.created_at)}</span>
+        </p>
+        <p class="text-sm text-gray-700 break-words whitespace-pre-wrap">${escHtml(c.content)}</p>
+      </div>
+      <!-- Like + Reply actions -->
+      <div class="flex items-center gap-4 mt-1 pl-1">
+        <button onclick="likeComment(${c.comment_id}, ${c.user_id}, ${postId})"
+          id="cmtLikeBtn-${c.comment_id}"
+          class="flex items-center gap-1 text-xs font-semibold transition ${likeTextClass}">
+          <i id="cmtLikeIcon-${c.comment_id}" class="${likeIconClass}"></i>
+          <span id="cmtLikeCount-${c.comment_id}">${lCount > 0 ? lCount : ''}</span>
+        </button>
+        <button onclick="startReply(${postId}, ${c.comment_id}, '${escHtml(cName)}')"
+          class="text-xs font-semibold text-gray-400 hover:text-[var(--color-primary)] transition">
+          Reply
+        </button>
+      </div>
+    </div>
+  </div>`;
+    }
+
+    // Reply box shown inside the comment input area
+    function startReply(postId, parentId, parentName) {
+      // Remove any existing reply label
+      const existing = document.getElementById('replyLabel-' + postId);
+      if (existing) existing.remove();
+
+      const input = document.getElementById('cmtInput-' + postId);
+      if (!input) return;
+
+      // Insert a small "Replying to @name" label above the input row (inside the flex-col wrapper)
+      const label = document.createElement('div');
+      label.id = 'replyLabel-' + postId;
+      label.className = 'flex items-center justify-between bg-indigo-50 text-xs text-[var(--color-primary)] font-semibold rounded-xl px-4 py-1.5 w-full';
+      label.innerHTML = `<span><i class="fas fa-reply mr-1"></i>Replying to <strong>@${escHtml(parentName)}</strong></span>
+    <button onclick="cancelReply(${postId})" class="text-gray-400 hover:text-gray-600 ml-2"><i class="fas fa-times"></i></button>`;
+
+      // input is inside .flex.gap-2 row, which is inside the flex-col div
+      const inputRow = input.parentElement; // the flex row with input + send btn
+      const flexCol = inputRow.parentElement; // the flex-col wrapper
+      flexCol.insertBefore(label, inputRow);
+
+      input.dataset.parentId = parentId;
+      input.dataset.parentName = parentName;
+      input.placeholder = `Reply to @${parentName}…`;
+      input.focus();
+    }
+
+    function cancelReply(postId) {
+      const label = document.getElementById('replyLabel-' + postId);
+      if (label) label.remove();
+      const input = document.getElementById('cmtInput-' + postId);
+      if (input) {
+        delete input.dataset.parentId;
+        delete input.dataset.parentName;
+        input.placeholder = 'Write a comment…';
+        input.value = '';
+      }
+    }
+
+    async function submitComment(postId, postOwnerId, encodedTitle) {
+      const input = document.getElementById('cmtInput-' + postId);
+      if (!input) return;
+      const text = input.value.trim();
+      if (!text) return;
+      if (!currentUser.id) { alert('Please log in to comment.'); return; }
+
+      const parentId = input.dataset.parentId || '';
+
+      const fd = new FormData();
+      fd.append('post_id', postId);
+      fd.append('user_id', currentUser.id);
+      fd.append('content', text);
+      if (parentId) fd.append('parent_comment_id', parentId);
+
+      try {
+        const res = await fetch(API + 'create_forum_comment.php', { method: 'POST', body: fd });
+        const data = await res.json();
+        if (data.success) {
+          input.value = '';
+          cancelReply(postId);
+          await loadComments(postId);
+          // Update comment count
+          const countEl = document.getElementById('cmtCount-' + postId);
+          const post = allPosts.find(p => String(p.post_id) === String(postId));
+          if (post && countEl) {
+            post.comment_count = (parseInt(post.comment_count) || 0) + 1;
+            const n = post.comment_count;
+            countEl.textContent = n + ' Comment' + (n !== 1 ? 's' : '');
+          }
+          // Notification: comment on someone else's post
+          if (postOwnerId && String(postOwnerId) !== String(currentUser.id)) {
+            sendNotif(postOwnerId, postId, 'comment', decodeURIComponent(encodedTitle));
+          }
+          // Notification: reply to someone else's comment
+          if (parentId && data.comment) {
+            const parentOwnerId = data.comment.user_id;
+            if (parentOwnerId && String(parentOwnerId) !== String(currentUser.id) && String(parentOwnerId) !== String(postOwnerId)) {
+              sendNotif(parentOwnerId, postId, 'reply', decodeURIComponent(encodedTitle));
+            }
+          }
+        } else {
+          alert(data.message || 'Failed to post comment.');
+        }
+      } catch (_) {
+        alert('Network error. Please try again.');
+      }
+    }
+
+    /* ─────────────────────────────────────────
+       LIKE POST
+    ───────────────────────────────────────── */
+    async function likePost(postId) {
+      if (!currentUser.id) { alert('Please log in to like posts.'); return; }
+
+      const btn = document.getElementById('likeBtn-' + postId);
+      const icon = document.getElementById('likeIcon-' + postId);
+      const countEl = document.getElementById('likeCount-' + postId);
+      const wasLiked = likedPostIds.has(String(postId));
+
+      // Optimistic UI
+      if (wasLiked) {
+        btn.classList.remove('text-red-500'); btn.classList.add('text-gray-500');
+        icon.classList.replace('fas', 'far');
+        countEl.textContent = Math.max(0, parseInt(countEl.textContent) - 1);
+        likedPostIds.delete(String(postId));
+      } else {
+        btn.classList.add('text-red-500'); btn.classList.remove('text-gray-500');
+        icon.classList.replace('far', 'fas');
+        countEl.textContent = parseInt(countEl.textContent) + 1;
+        likedPostIds.add(String(postId));
+      }
+
+      try {
+        const fd = new FormData();
+        fd.append('post_id', postId);
+        fd.append('user_id', currentUser.id);
+        const res = await fetch(API + 'toggle_post_like.php', { method: 'POST', body: fd });
+        const data = await res.json();
+        if (data.success) {
+          countEl.textContent = data.like_count;
+          const nowLiked = !!data.liked;
+          if (nowLiked) { likedPostIds.add(String(postId)); btn.classList.add('text-red-500'); btn.classList.remove('text-gray-500'); icon.classList.replace('far', 'fas'); }
+          else { likedPostIds.delete(String(postId)); btn.classList.remove('text-red-500'); btn.classList.add('text-gray-500'); icon.classList.replace('fas', 'far'); }
+          const post = allPosts.find(p => String(p.post_id) === String(postId));
+          if (post) post.like_count = data.like_count;
+          // Notification
+          if (nowLiked && post && String(post.user_id) !== String(currentUser.id)) {
+            sendNotif(post.user_id, postId, 'like', post.title || '');
+          }
+        } else {
+          // Revert
+          if (wasLiked) { likedPostIds.add(String(postId)); btn.classList.add('text-red-500'); icon.classList.replace('far', 'fas'); }
+          else { likedPostIds.delete(String(postId)); btn.classList.remove('text-red-500'); icon.classList.replace('fas', 'far'); }
+        }
+      } catch (_) { }
+    }
+
+    /* ─────────────────────────────────────────
+       LIKE COMMENT
+    ───────────────────────────────────────── */
+    async function likeComment(commentId, ownerId, postId) {
+      if (!currentUser.id) { alert('Please log in to like comments.'); return; }
+
+      const btn = document.getElementById('cmtLikeBtn-' + commentId);
+      const icon = document.getElementById('cmtLikeIcon-' + commentId);
+      const countEl = document.getElementById('cmtLikeCount-' + commentId);
+      const wasLiked = likedCommentIds.has(String(commentId));
+      const curCount = parseInt(countEl ? countEl.textContent : '0') || 0;
+
+      // Optimistic UI
+      if (wasLiked) {
+        btn.classList.remove('text-red-500'); btn.classList.add('text-gray-400');
+        icon.classList.replace('fas', 'far');
+        const n = Math.max(0, curCount - 1);
+        countEl.textContent = n > 0 ? n : '';
+        likedCommentIds.delete(String(commentId));
+      } else {
+        btn.classList.add('text-red-500'); btn.classList.remove('text-gray-400');
+        icon.classList.replace('far', 'fas');
+        countEl.textContent = curCount + 1;
+        likedCommentIds.add(String(commentId));
+      }
+
+      try {
+        const post = allPosts.find(p => p.post_id == postId);
+        const fd = new FormData();
+        fd.append('comment_id', commentId);
+        fd.append('user_id', currentUser.id);
+        fd.append('owner_id', ownerId);
+        fd.append('post_id', postId);
+        fd.append('post_title', post ? (post.title || '') : '');
+        const res = await fetch(API + 'toggle_comment_like.php', { method: 'POST', body: fd });
+        const data = await res.json();
+        if (data.success) {
+          const nowLiked = !!data.liked;
+          const lc = parseInt(data.like_count) || 0;
+          countEl.textContent = lc > 0 ? lc : '';
+          if (nowLiked) { likedCommentIds.add(String(commentId)); btn.classList.add('text-red-500'); btn.classList.remove('text-gray-400'); icon.classList.replace('far', 'fas'); }
+          else { likedCommentIds.delete(String(commentId)); btn.classList.remove('text-red-500'); btn.classList.add('text-gray-400'); icon.classList.replace('fas', 'far'); }
+        } else {
+          // Revert
+          if (wasLiked) { likedCommentIds.add(String(commentId)); btn.classList.add('text-red-500'); icon.classList.replace('far', 'fas'); countEl.textContent = curCount > 0 ? curCount : ''; }
+          else { likedCommentIds.delete(String(commentId)); btn.classList.remove('text-red-500'); icon.classList.replace('fas', 'far'); const n2 = Math.max(0, curCount - 1); countEl.textContent = n2 > 0 ? n2 : ''; }
+        }
+      } catch (_) { }
+    }
+
+    /* ─────────────────────────────────────────
+       NOTIFICATIONS
+    ───────────────────────────────────────── */
+    function sendNotif(ownerId, postId, type, postTitle) {
+      if (!currentUser.id || String(ownerId) === String(currentUser.id)) return;
+      const fd = new FormData();
+      fd.append('owner_id', ownerId);
+      fd.append('actor_id', currentUser.id);
+      fd.append('post_id', postId);
+      fd.append('type', type);
+      fd.append('post_title', postTitle);
+      fetch(API + 'create_forum_notifications.php', { method: 'POST', body: fd }).catch(() => { });
+    }
+
+    let notifPanelOpen = false;
+    function toggleNotifPanel() {
+      const panel = document.getElementById('notifPanel');
+      notifPanelOpen = !notifPanelOpen;
+      if (notifPanelOpen) { panel.classList.remove('hidden'); loadNotifications(); }
+      else panel.classList.add('hidden');
+    }
+    document.addEventListener('click', function (e) {
+      const wrap = document.getElementById('notifWrap');
+      if (wrap && !wrap.contains(e.target) && notifPanelOpen) {
+        document.getElementById('notifPanel').classList.add('hidden');
+        notifPanelOpen = false;
+      }
+    });
+
+    async function loadNotifications() {
+      if (!currentUser.id) {
+        document.getElementById('notifList').innerHTML = '<p class="text-center text-gray-400 text-sm py-8">Log in to see notifications.</p>';
+        return;
+      }
+      try {
+        const res = await fetch(API + 'get_forum_notifications.php?user_id=' + currentUser.id);
+        const data = await res.json();
+        renderNotifications(data.notifications || [], data.unread || 0);
+      } catch (_) {
+        document.getElementById('notifList').innerHTML = '<p class="text-center text-red-400 text-sm py-8">Failed to load.</p>';
+      }
+    }
+
+    function renderNotifications(notifs, unread) {
+      const badge = document.getElementById('notifBadge');
+      badge.textContent = unread > 99 ? '99+' : unread;
+      badge.style.display = unread > 0 ? 'flex' : 'none';
+
+      const list = document.getElementById('notifList');
+      if (!notifs.length) {
+        list.innerHTML = '<div class="flex flex-col items-center py-10 text-gray-400"><i class="fas fa-bell-slash text-3xl mb-2"></i><p class="text-sm">No notifications yet</p></div>';
+        return;
+      }
+      const ICONS = { like: 'fa-heart text-red-400', comment: 'fa-comment-dots text-blue-400', reply: 'fa-reply text-green-400', comment_like: 'fa-heart text-orange-400' };
+      const ACTIONS = { like: 'liked your post', comment: 'commented on your post', reply: 'replied to your comment', comment_like: 'liked your comment' };
+
+      list.innerHTML = notifs.map(n => {
+        const av = resolveAvatar(n.actor_pic, n.actor_name);
+        const icon = `<i class="fas ${ICONS[n.type] || 'fa-bell text-gray-400'} text-xs"></i>`;
+        const action = ACTIONS[n.type] || 'interacted with your post';
+        const unread = !parseInt(n.is_read);
+        return `<div class="flex items-start gap-3 px-4 py-3 border-b border-gray-50 hover:bg-gray-50 transition cursor-pointer ${unread ? 'bg-blue-50' : ''}" onclick="notifClick(${n.post_id})">
+      <div class="relative flex-shrink-0">
+        <img src="${escHtml(av)}" onerror="this.src='${escHtml(resolveAvatar('', n.actor_name))}'"
+          class="w-9 h-9 rounded-full object-cover border border-gray-200">
+        <span class="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-white flex items-center justify-center shadow">${icon}</span>
+      </div>
+      <div class="flex-1 min-w-0">
+        <p class="text-xs text-gray-700 leading-snug"><span class="font-bold">${escHtml(n.actor_name)}</span> ${action}</p>
+        <p class="text-xs text-gray-400 truncate mt-0.5">${escHtml(n.post_title)}</p>
+        <p class="text-[10px] text-gray-300 mt-0.5">${timeAgo(n.created_at)}</p>
+      </div>
+      ${unread ? '<span class="w-2 h-2 rounded-full bg-[var(--color-primary)] flex-shrink-0 mt-1"></span>' : ''}
+    </div>`;
+      }).join('');
+    }
+
+    function notifClick(postId) {
+      document.getElementById('notifPanel').classList.add('hidden');
+      notifPanelOpen = false;
+      markAllRead();
+      const card = document.getElementById('post-' + postId);
+      if (card) {
+        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        card.style.transition = 'box-shadow 0.3s';
+        card.style.boxShadow = '0 0 0 3px var(--color-primary)';
+        setTimeout(() => { card.style.boxShadow = ''; }, 1800);
+      } else {
+        activeFilter = 'all';
+        renderFeed();
+        setTimeout(() => {
+          const c = document.getElementById('post-' + postId);
+          if (c) c.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 300);
+      }
+    }
+
+    async function markAllRead() {
+      if (!currentUser.id) return;
+      document.getElementById('notifBadge').style.display = 'none';
+      try {
+        const fd = new FormData();
+        fd.append('user_id', currentUser.id);
+        await fetch(API + 'mark_notifications_read.php', { method: 'POST', body: fd });
+        loadNotifications();
+      } catch (_) { }
+    }
+
+    async function fetchNotifCount() {
+      if (!currentUser.id) return;
+      try {
+        const res = await fetch(API + 'get_forum_notifications.php?user_id=' + currentUser.id);
+        const data = await res.json();
+        const badge = document.getElementById('notifBadge');
+        const unread = data.unread || 0;
+        badge.textContent = unread > 99 ? '99+' : unread;
+        badge.style.display = unread > 0 ? 'flex' : 'none';
+      } catch (_) { }
+    }
+
+    /* ─────────────────────────────────────────
+       DELETE POST
+    ───────────────────────────────────────── */
+    async function deletePost(postId) {
+      if (!confirm('Delete this post? This cannot be undone.')) return;
+      const fd = new FormData();
+      fd.append('post_id', postId);
+      fd.append('user_id', currentUser.id || '');
+      try {
+        const res = await fetch(API + 'delete_forum_post.php', { method: 'POST', body: fd });
+        const data = await res.json();
+        if (data.success) {
+          const card = document.getElementById('post-' + postId);
+          if (card) card.remove();
+          allPosts = allPosts.filter(p => String(p.post_id) !== String(postId));
+          if (!allPosts.length) renderFeed();
+        } else {
+          alert(data.message || 'Failed to delete post.');
+        }
+      } catch (_) { alert('Network error. Please try again.'); }
+    }
+
+    /* ─────────────────────────────────────────
+       PROFILE MODAL
+    ───────────────────────────────────────── */
+    async function openProfileModal(userId) {
+      const modal = document.getElementById('profileModal');
+      const body = document.getElementById('profileModalBody');
+      modal.classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+      body.innerHTML = '<i class="fas fa-spinner fa-spin text-2xl text-gray-400"></i>';
+      if (!userId) { body.innerHTML = '<p class="text-red-400 text-sm">Invalid user.</p>'; return; }
+      try {
+        const res = await fetch(API + 'get_forum_user.php?user_id=' + userId);
+        const data = await res.json();
+        if (!data.success) { body.innerHTML = '<p class="text-red-400 text-sm">' + escHtml(data.message || 'User not found.') + '</p>'; return; }
+        const u = data.user;
+        const uName = u.fullname || u.username || 'Unknown';
+        const uAv = resolveAvatar(u.profile_pic, uName);
+        body.innerHTML = `
+      <img src="${escHtml(uAv)}" onerror="this.src='${escHtml(resolveAvatar('', uName))}'"
+        class="w-20 h-20 rounded-full object-cover border-4 border-[var(--color-primary)]/20 mx-auto mb-3 cursor-zoom-in hover:opacity-90 transition"
+        title="View full image"
+        onclick="openImgViewer('${escHtml(uAv)}', '${escHtml(resolveAvatar('', uName))}')">
+      <h3 class="font-bold text-gray-800 text-lg">${escHtml(uName)}</h3>
+      ${u.role === 'admin' ? '<span class="inline-flex items-center gap-1 text-xs font-bold px-3 py-1 rounded-full mt-1 mb-3" style="background-color:#46B3E6;color:#fff;"><i class="fas fa-star"></i> Admin</span>' : '<div class="mb-3"></div>'}
+      <div class="text-left mt-2 space-y-2 text-sm">
+        <div class="flex gap-2 items-start"><i class="fas fa-user text-[var(--color-primary)] w-4 mt-0.5 flex-shrink-0"></i>
+          <div><p class="text-xs text-gray-400 font-semibold uppercase tracking-wide">Username</p><p class="text-gray-700">${escHtml(u.username || '—')}</p></div></div>
+        <div class="flex gap-2 items-start"><i class="fas fa-envelope text-[var(--color-primary)] w-4 mt-0.5 flex-shrink-0"></i>
+          <div><p class="text-xs text-gray-400 font-semibold uppercase tracking-wide">Email</p><p class="text-gray-700">${escHtml(u.email || '—')}</p></div></div>
+      </div>`;
+      } catch (_) { body.innerHTML = '<p class="text-red-400 text-sm">Failed to load profile.</p>'; }
+    }
+    function closeProfileModal() {
+      document.getElementById('profileModal').classList.add('hidden');
+      document.body.style.overflow = '';
+    }
+    document.getElementById('profileModal').addEventListener('click', function (e) { if (e.target === this) closeProfileModal(); });
+
+    /* ─────────────────────────────────────────
+       IMAGE VIEWER (Avatar single-image)
+    ───────────────────────────────────────── */
+    function openImgViewer(src, fallback) {
+      // For avatar/single image, wrap into lightbox with 1 item
+      var items = JSON.stringify([{ path: src, type: 'image' }]);
+      openLightbox(0, items);
+    }
+    function closeImgViewer(e) { closeLightbox(); }
+
+    /* ─────────────────────────────────────────
+       LIGHTBOX (Swipeable carousel)
+    ───────────────────────────────────────── */
+    var _lbItems = [];
+    var _lbIdx   = 0;
+    var _lbTouchStartX = null;
+
+    function openLightbox(startIdx, itemsJson) {
+      try {
+        _lbItems = typeof itemsJson === 'string' ? JSON.parse(itemsJson) : itemsJson;
+      } catch(e) { _lbItems = []; }
+      if (!_lbItems.length) return;
+      _lbIdx = Math.max(0, Math.min(startIdx, _lbItems.length - 1));
+
+      var modal = document.getElementById('imgViewerModal');
+      modal.classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+
+      // Show/hide nav buttons
+      document.getElementById('imgViewerPrev').style.display = _lbItems.length > 1 ? 'flex' : 'none';
+      document.getElementById('imgViewerNext').style.display = _lbItems.length > 1 ? 'flex' : 'none';
+
+      _lbRender();
+    }
+
+    function closeLightbox() {
+      document.getElementById('imgViewerModal').classList.add('hidden');
+      document.body.style.overflow = '';
+      // Stop any playing videos
+      document.querySelectorAll('#imgViewerStage video').forEach(function(v){ v.pause(); });
+    }
+
+    function _lbRender() {
+      var item  = _lbItems[_lbIdx];
+      var stage = document.getElementById('imgViewerStage');
+      var counter = document.getElementById('imgViewerCounter');
+      var dots    = document.getElementById('imgViewerDots');
+
+      // Counter
+      counter.textContent = (_lbIdx + 1) + ' / ' + _lbItems.length;
+      counter.style.display = _lbItems.length > 1 ? 'block' : 'none';
+
+      // Media
+      if (item.type === 'video') {
+        stage.innerHTML = '<video src="' + item.path + '" controls autoplay style="max-width:90vw;max-height:calc(100vh - 120px);border-radius:12px;box-shadow:0 8px 40px rgba(0,0,0,0.6);background:#000;" onclick="event.stopPropagation()"></video>';
+      } else {
+        stage.innerHTML = '<img src="' + item.path + '" alt="media" style="max-width:90vw;max-height:calc(100vh - 120px);border-radius:12px;box-shadow:0 8px 40px rgba(0,0,0,0.6);object-fit:contain;display:block;user-select:none;" onclick="event.stopPropagation()" draggable="false">';
+      }
+
+      // Dots
+      if (_lbItems.length > 1) {
+        dots.innerHTML = _lbItems.map(function(_, i) {
+          return '<span style="width:8px;height:8px;border-radius:50%;display:inline-block;background:' + (i === _lbIdx ? '#fff' : 'rgba(255,255,255,0.35)') + ';transition:background 0.2s;cursor:pointer;" onclick="lbGoTo(' + i + ')"></span>';
+        }).join('');
+      } else {
+        dots.innerHTML = '';
+      }
+    }
+
+    function lbGoTo(idx) {
+      // Stop any playing videos
+      document.querySelectorAll('#imgViewerStage video').forEach(function(v){ v.pause(); });
+      _lbIdx = (idx + _lbItems.length) % _lbItems.length;
+      _lbRender();
+    }
+
+    // Wire up nav buttons & backdrop click
+    (function() {
+      document.getElementById('imgViewerPrev').addEventListener('click', function(e) { e.stopPropagation(); lbGoTo(_lbIdx - 1); });
+      document.getElementById('imgViewerNext').addEventListener('click', function(e) { e.stopPropagation(); lbGoTo(_lbIdx + 1); });
+      document.getElementById('imgViewerClose').addEventListener('click', function(e) { e.stopPropagation(); closeLightbox(); });
+
+      // Backdrop click closes
+      document.getElementById('imgViewerModal').addEventListener('click', function(e) {
+        if (e.target === this || e.target === document.getElementById('imgViewerStage')) closeLightbox();
+      });
+
+      // Touch swipe support
+      document.getElementById('imgViewerModal').addEventListener('touchstart', function(e) {
+        _lbTouchStartX = e.touches[0].clientX;
+      }, { passive: true });
+      document.getElementById('imgViewerModal').addEventListener('touchend', function(e) {
+        if (_lbTouchStartX === null) return;
+        var dx = e.changedTouches[0].clientX - _lbTouchStartX;
+        _lbTouchStartX = null;
+        if (Math.abs(dx) < 40) return; // too short
+        if (dx < 0) lbGoTo(_lbIdx + 1); // swipe left → next
+        else         lbGoTo(_lbIdx - 1); // swipe right → prev
+      }, { passive: true });
+    })();
+
+    document.addEventListener('keydown', function(e) {
+      var modal = document.getElementById('imgViewerModal');
+      if (modal.classList.contains('hidden')) return;
+      if (e.key === 'Escape')      closeLightbox();
+      if (e.key === 'ArrowRight')  lbGoTo(_lbIdx + 1);
+      if (e.key === 'ArrowLeft')   lbGoTo(_lbIdx - 1);
+    });
+
+    /* ─────────────────────────────────────────
+       FILTER TABS
+    ───────────────────────────────────────── */
+    function setFilter(tag, btn) {
+      activeFilter = tag;
+      document.querySelectorAll('.filter-tab').forEach(b => {
+        b.style.background = '';
+        b.style.borderColor = '#d1d5db';
+        b.style.color = '#4b5563';
+      });
+      btn.style.background = 'var(--color-primary)';
+      btn.style.borderColor = 'var(--color-primary)';
+      btn.style.color = '#fff';
+      renderFeed();
+    }
+    function filterPosts(val) { activeSearch = val; renderFeed(); }
+
+    /* ─────────────────────────────────────────
+       NEW POST MODAL
+    ───────────────────────────────────────── */
+    function openPostModal() {
+      document.getElementById('postModal').classList.remove('hidden');
+      document.getElementById('modalAvatar').src = currentUser.avatar || resolveAvatar('', currentUser.name);
+      document.getElementById('modalUsername').textContent = currentUser.name || 'User';
+      document.body.style.overflow = 'hidden';
+    }
+    function closePostModal() {
+      document.getElementById('postModal').classList.add('hidden');
+      document.getElementById('postTitle').value = '';
+      document.getElementById('postBody').value = '';
+      document.getElementById('postTag').value = 'general';
+      document.getElementById('postError').classList.add('hidden');
+      document.getElementById('charCount').textContent = '0';
+      document.body.style.overflow = '';
+      clearMediaPreview();
+    }
+    document.getElementById('postBody').addEventListener('input', function () {
+      document.getElementById('charCount').textContent = this.value.length;
+    });
+    document.getElementById('postModal').addEventListener('click', function (e) { if (e.target === this) closePostModal(); });
+
+    const MAX_IMAGES = 5;
+    let selectedFiles = [];
+
+    function updateImgCounter() {
+      var counter = document.getElementById('imgCounter');
+      var addBtn = document.getElementById('addPhotoBtn');
+      if (counter) counter.textContent = '(' + selectedFiles.length + ' / ' + MAX_IMAGES + ')';
+      if (addBtn) addBtn.style.display = selectedFiles.length >= MAX_IMAGES ? 'none' : '';
+    }
+
+    function renderImagePreviews() {
+      var preview = document.getElementById('postMediaPreview');
+      preview.innerHTML = '';
+      selectedFiles.forEach(function(file, idx) {
+        var url = URL.createObjectURL(file);
+        var isVideo = file.type.startsWith('video/');
+        var thumb = document.createElement('div');
+        thumb.style.cssText = 'position:relative;width:80px;height:80px;flex-shrink:0;border-radius:10px;overflow:hidden;border:1px solid #e5e7eb;background:#000;';
+        var mediaEl = isVideo
+          ? '<video src="' + url + '" style="width:100%;height:100%;object-fit:cover;display:block;" muted></video><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;"><i class="fas fa-play-circle" style="font-size:1.6rem;color:rgba(255,255,255,0.85);text-shadow:0 1px 4px rgba(0,0,0,0.5);"></i></div>'
+          : '<img src="' + url + '" style="width:100%;height:100%;object-fit:cover;display:block;">';
+        thumb.innerHTML = mediaEl
+          + '<button type="button" data-idx="' + idx + '" style="position:absolute;top:3px;right:3px;background:rgba(0,0,0,0.65);color:#fff;border:none;border-radius:50%;width:20px;height:20px;font-size:10px;cursor:pointer;line-height:20px;text-align:center;z-index:10;">&#x2715;</button>';
+        thumb.querySelector('button').addEventListener('click', function() {
+          selectedFiles.splice(parseInt(this.dataset.idx), 1);
+          renderImagePreviews();
+          updateImgCounter();
+        });
+        preview.appendChild(thumb);
+      });
+      updateImgCounter();
+    }
+
+    function clearMediaPreview() {
+      selectedFiles = [];
+      document.getElementById('postMedia').value = '';
+      renderImagePreviews();
+    }
+
+    document.getElementById('postMedia').addEventListener('change', function () {
+      var newFiles = Array.from(this.files);
+      var remaining = MAX_IMAGES - selectedFiles.length;
+      if (newFiles.length > remaining) {
+        alert('You can only attach up to ' + MAX_IMAGES + ' files. ' + (MAX_IMAGES - remaining) + ' already selected.');
+      }
+      selectedFiles = selectedFiles.concat(newFiles.slice(0, remaining));
+      this.value = '';
+      renderImagePreviews();
+    });
+
+    async function submitPost() {
+      const title = document.getElementById('postTitle').value.trim();
+      const body = document.getElementById('postBody').value.trim();
+      const tag = document.getElementById('postTag').value;
+      const err = document.getElementById('postError');
+      const subBtn = document.querySelector('#postModal button[onclick="submitPost()"]');
+      if (!title || !body) { err.classList.remove('hidden'); return; }
+      err.classList.add('hidden');
+      subBtn.disabled = true;
+      subBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Posting…';
+      const fd = new FormData();
+      fd.append('title', title); fd.append('content', body); fd.append('tag', tag); fd.append('user_id', currentUser.id || '');
+      selectedFiles.forEach(function(file) { fd.append('images[]', file); });
+      try {
+        const res = await fetch(API + 'create_forum_post.php', { method: 'POST', body: fd });
+        const data = await res.json();
+        console.log('[DEBUG] submitPost response:', JSON.stringify(data));
+        console.log('[DEBUG] Files sent:', selectedFiles.length, selectedFiles.map(f => f.name));
+        if (data.success) {
+          activeFilter = 'all';
+          document.querySelectorAll('.filter-tab').forEach((b, i) => {
+            if (i === 0) { b.style.background = 'var(--color-primary)'; b.style.borderColor = 'var(--color-primary)'; b.style.color = '#fff'; }
+            else { b.style.background = ''; b.style.borderColor = '#d1d5db'; b.style.color = '#4b5563'; }
+          });
+          closePostModal();
+          await fetchPosts();
+        } else {
+          err.textContent = data.message || 'Failed to create post.';
+          err.classList.remove('hidden');
+        }
+      } catch (_) {
+        err.textContent = 'Network error. Please try again.';
+        err.classList.remove('hidden');
+      } finally {
+        subBtn.disabled = false;
+        subBtn.innerHTML = '<i class="fas fa-paper-plane mr-1"></i> Post';
+      }
+    }
+
+
+    /* ─────────────────────────────────────────
+       REPORT POST
+    ───────────────────────────────────────── */
+    var _reportPostId = null;
+    var _reportUserId = null;
+
+    function openReportModal(postId, userId) {
+      _reportPostId = postId;
+      _reportUserId = userId;
+      // Clear previous selection
+      document.querySelectorAll('input[name="reportReason"]').forEach(r => r.checked = false);
+      document.getElementById('reportError').classList.add('hidden');
+      document.getElementById('reportModal').classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeReportModal() {
+      document.getElementById('reportModal').classList.add('hidden');
+      document.body.style.overflow = '';
+      _reportPostId = null;
+      _reportUserId = null;
+    }
+
+    document.getElementById('reportModal').addEventListener('click', function(e) {
+      if (e.target === this) closeReportModal();
+    });
+
+    async function submitReport() {
+      const selected = document.querySelector('input[name="reportReason"]:checked');
+      const errEl = document.getElementById('reportError');
+      if (!selected) { errEl.classList.remove('hidden'); return; }
+      errEl.classList.add('hidden');
+
+      if (!currentUser.id) { alert('Please log in to report.'); return; }
+
+      const btn = document.querySelector('#reportModal button[onclick="submitReport()"]');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Submitting…';
+
+      const fd = new FormData();
+      fd.append('reporter_id',      currentUser.id);
+      fd.append('reported_user_id', _reportUserId);
+      fd.append('post_id',          _reportPostId);
+      fd.append('reason',           selected.value);
+
+      try {
+        const res  = await fetch(API + 'submit_report.php', { method: 'POST', body: fd });
+        const data = await res.json();
+        if (data.success) {
+          closeReportModal();
+          // Show toast
+          showReportToast('Report submitted. Thank you for helping keep the forum safe.');
+        } else {
+          errEl.textContent = data.message || 'Failed to submit report.';
+          errEl.classList.remove('hidden');
+        }
+      } catch (_) {
+        errEl.textContent = 'Network error. Please try again.';
+        errEl.classList.remove('hidden');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-flag mr-1"></i> Submit Report';
+      }
+    }
+
+    function showReportToast(msg) {
+      var t = document.createElement('div');
+      t.textContent = msg;
+      t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1f2937;color:#fff;padding:12px 22px;border-radius:12px;font-size:.875rem;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,0.3);opacity:0;transition:opacity 0.3s;';
+      document.body.appendChild(t);
+      setTimeout(() => t.style.opacity = '1', 10);
+      setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 400); }, 3500);
+    }
+
+    /* ─────────────────────────────────────────
+       INIT
+    ───────────────────────────────────────── */
+    // Run session + posts + liked-IDs all in parallel, render only once everything is ready
+    (async function init() {
+      const feed  = document.getElementById('forumFeed');
+      const empty = document.getElementById('emptyState');
+      feed.innerHTML = '<div class="text-center py-12 text-gray-400"><i class="fas fa-spinner fa-spin text-3xl mb-3 block"></i><p class="text-sm">Loading posts...</p></div>';
+      empty.classList.add('hidden');
+
+      // 1. Resolve user session first (fast — cached by browser most of the time)
+      await initUser();
+
+      // 2. Fire posts + liked IDs in parallel
+      const postsPromise = fetch(API + 'get_forum_posts.php').then(r => r.json()).catch(() => ({ success: false, posts: [] }));
+      const likedPromise = currentUser.id
+        ? fetch(API + 'get_liked_posts.php?user_id=' + currentUser.id).then(r => r.json()).catch(() => ({}))
+        : Promise.resolve({});
+
+      const [postsData, likedData] = await Promise.all([postsPromise, likedPromise]);
+
+      allPosts       = postsData.success ? (postsData.posts || []) : [];
+      likedPostIds   = new Set((likedData.liked_post_ids || []).map(String));
+
+      // 3. Single render — likes are already correct on first paint
+      renderFeed();
+
+      // 4. Background tasks
+      fetchNotifCount();
+      checkWarningsBadge();
+    })();
+
+    // ── Warning badge in sidebar ──────────────────────────────────
+    async function checkWarningsBadge() {
+      if (!currentUser.id) return;
+      try {
+        const res  = await fetch(API + 'get_user_warnings.php?user_id=' + encodeURIComponent(currentUser.id));
+        const data = await res.json();
+        if (data.success && data.unread > 0) {
+          const badge = document.getElementById('sidebarWarnBadge');
+          if (badge) badge.style.display = 'inline';
+        }
+      } catch (_) {}
+    }
+    setInterval(() => { if (!notifPanelOpen) fetchNotifCount(); }, 30000);
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="eng">
+
+<head>
+  <title>Account Technilog</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="../stylesheet/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <style>
+    /* Avatar */
+    #avatarWrap {
+      position: relative;
+      width: 96px;
+      height: 96px;
+      cursor: pointer;
+    }
+
+    #avatarImg {
+      width: 96px;
+      height: 96px;
+      border-radius: 9999px;
+      object-fit: cover;
+      border: 3px solid rgba(255, 255, 255, 0.35);
+    }
+
+    .edit-badge {
+      position: absolute;
+      bottom: 2px;
+      right: 2px;
+      width: 26px;
+      height: 26px;
+      background: #fff;
+      border-radius: 9999px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      color: var(--color-primary);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
+    }
+
+    #avatarInput {
+      display: none;
+    }
+
+    /* Profile rows */
+    .profile-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 1.25rem;
+      cursor: default;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+      transition: background 0.15s;
+      background: #ffffff !important;
+    }
+
+    .profile-row.editable-row {
+      cursor: pointer;
+    }
+
+    .profile-row:last-child {
+      border-bottom: none;
+    }
+
+    .profile-row.editable-row:hover {
+      background: rgba(46, 39, 157, 0.04) !important;
+    }
+
+    .row-label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #111827 !important;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .row-value {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-size: 0.92rem;
+      font-weight: 500;
+      color: #111827 !important;
+    }
+
+    .row-value span {
+      color: #111827 !important;
+    }
+
+    .row-value .unset {
+      color: #9ca3af !important;
+      font-style: italic;
+    }
+
+    .chevron {
+      font-size: 0.7rem;
+      color: #d1d5db;
+    }
+
+    /* Logout confirm modal */
+    .logout-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      background: rgba(0, 0, 0, 0.5);
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(3px);
+    }
+
+    .logout-overlay.open {
+      display: flex;
+    }
+
+    .logout-box {
+      background: #fff;
+      border-radius: 20px;
+      padding: 2rem 1.75rem;
+      max-width: 340px;
+      width: 90%;
+      text-align: center;
+      box-shadow: 0 16px 48px rgba(0, 0, 0, .2);
+      animation: popUp 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    @keyframes popUp {
+      from {
+        transform: scale(0.85);
+        opacity: 0
+      }
+
+      to {
+        transform: scale(1);
+        opacity: 1
+      }
+    }
+
+    .logout-box .lo-icon {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: #fef2f2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 1rem;
+    }
+
+    .logout-box h3 {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: #1f2937;
+      margin-bottom: 0.35rem;
+    }
+
+    .logout-box p {
+      font-size: 0.84rem;
+      color: #6b7280;
+      margin-bottom: 1.5rem;
+      line-height: 1.5;
+    }
+
+    .logout-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .logout-actions button {
+      flex: 1;
+      padding: 11px;
+      border-radius: 12px;
+      font-size: 0.88rem;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .lo-cancel {
+      background: #f3f4f6;
+      color: #374151;
+    }
+
+    .lo-cancel:hover {
+      background: #e5e7eb;
+    }
+
+    .lo-confirm {
+      background: #ef4444;
+      color: #fff;
+    }
+
+    .lo-confirm:hover {
+      background: #dc2626;
+    }
+
+    /* Edit modal */
+    #editModal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      background: rgba(0, 0, 0, 0.45);
+      backdrop-filter: blur(4px);
+      align-items: flex-end;
+      justify-content: center;
+    }
+
+    #editModal.open {
+      display: flex;
+    }
+
+    .modal-box {
+      background: #fff;
+      border-radius: 1.5rem 1.5rem 0 0;
+      padding: 2rem 1.5rem 2.5rem;
+      width: 100%;
+      max-width: 480px;
+      animation: slideUp 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    @keyframes slideUp {
+      from {
+        transform: translateY(100%);
+        opacity: 0;
+      }
+
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+  </style>
+</head>
+
+<body class="min-h-screen" style="background: #f0f2f8;">
+
+  <!-- HEADER -->
+  <div class="sticky top-0 z-50 flex items-center gap-3 px-5 py-4 shadow-sm" style="background: var(--color-primary);">
+    <button id="backBtn" class="text-white/80 hover:text-white transition text-lg">
+      <i class="fas fa-arrow-left"></i>
+    </button>
+    <h2 class="text-white font-bold text-lg tracking-wide">Settings</h2>
+  </div>
+
+  <!-- HERO CARD -->
+  <div class="relative overflow-hidden" style="background: var(--color-primary);">
+    <!-- decorative circles -->
+    <div class="absolute -top-10 -right-10 w-48 h-48 rounded-full opacity-10" style="background: white;"></div>
+    <div class="absolute top-8 -right-4 w-28 h-28 rounded-full opacity-10" style="background: white;"></div>
+
+    <div class="relative flex flex-col items-center pb-10 pt-8 px-6">
+      <div id="avatarWrap">
+        <img id="avatarImg" src="https://ui-avatars.com/api/?name=User&background=4D80E4&color=fff&size=200"
+          alt="Avatar">
+        <div class="edit-badge"><i class="fas fa-pen"></i></div>
+        <input type="file" id="avatarInput" accept="image/*">
+      </div>
+      <p id="displayName" class="text-white font-bold text-2xl mt-4 tracking-tight">User</p>
+      <p id="displayEmail" class="text-white/50 text-sm mt-1">—</p>
+    </div>
+
+    <!-- wave bottom -->
+    <div class="h-6 rounded-t-3xl" style="background:#f0f2f8; margin-top:-1px;"></div>
+  </div>
+
+  <!-- ACCOUNT INFO CARD -->
+  <div class="mx-4 -mt-1 rounded-2xl overflow-hidden shadow bg-white">
+    <div class="px-5 pt-4 pb-1 flex items-center gap-2">
+      <i class="fas fa-user-circle text-xs" style="color:var(--color-primary);"></i>
+      <p class="text-xs tracking-widest font-bold uppercase" style="color:var(--color-primary);">Account Info</p>
+    </div>
+
+    <div class="profile-row" data-field="name" data-label="Name" data-type="text">
+      <span class="row-label">Name</span>
+      <span class="row-value">
+        <span id="pName">—</span>
+        <i class="fas fa-chevron-right chevron"></i>
+      </span>
+    </div>
+
+
+
+    <div class="profile-row" data-field="email" data-label="Email" data-type="email">
+      <span class="row-label">Email</span>
+      <span class="row-value">
+        <span id="pEmail">—</span>
+        <i class="fas fa-chevron-right chevron"></i>
+      </span>
+    </div>
+
+    <div class="profile-row editable-row" data-field="address" data-label="Address" data-type="address">
+      <span class="row-label">Address</span>
+      <span class="row-value">
+        <span id="pAddress" class="unset">Set Now</span>
+        <i class="fas fa-chevron-right chevron"></i>
+      </span>
+    </div>
+  </div>
+
+  <!-- LOG OUT -->
+  <div class="mx-4 mt-4 mb-10">
+    <button id="logoutBtn"
+      class="w-full py-3.5 rounded-2xl font-bold text-white text-sm tracking-wide shadow-lg transition hover:opacity-90 flex items-center justify-center gap-2"
+      style="background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));">
+      <i class="fas fa-right-from-bracket"></i> Log Out
+    </button>
+  </div>
+
+  <!-- EDIT MODAL (bottom sheet) -->
+  <div id="editModal">
+    <div class="modal-box">
+      <!-- drag handle -->
+      <div class="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-5"></div>
+      <h3 id="modalTitle" class="text-lg font-bold mb-5" style="color: var(--color-primary);">Edit Name</h3>
+
+      <div id="textInputWrap">
+        <input id="modalInput" type="text"
+          class="w-full border-2 border-gray-100 rounded-xl px-4 py-3 outline-none text-sm font-medium text-gray-800 mb-5 transition focus:border-[var(--color-primary)]"
+          style="background:#f8faff;">
+      </div>
+
+      <!-- Address structured fields -->
+      <div id="addressInputWrap" style="display:none;" class="mb-5 flex flex-col gap-2">
+        <input id="addrStreet" type="text" placeholder="Street / House No."
+          class="w-full border-2 border-gray-100 rounded-xl px-4 py-2.5 outline-none text-sm font-medium text-gray-800 transition focus:border-[var(--color-primary)]"
+          style="background:#f8faff;">
+        <input id="addrBarangay" type="text" placeholder="Barangay"
+          class="w-full border-2 border-gray-100 rounded-xl px-4 py-2.5 outline-none text-sm font-medium text-gray-800 transition focus:border-[var(--color-primary)]"
+          style="background:#f8faff;">
+        <div class="flex gap-2">
+          <input id="addrCity" type="text" placeholder="City / Municipality"
+            class="flex-1 border-2 border-gray-100 rounded-xl px-4 py-2.5 outline-none text-sm font-medium text-gray-800 transition focus:border-[var(--color-primary)]"
+            style="background:#f8faff;">
+          <input id="addrProvince" type="text" placeholder="Province"
+            class="flex-1 border-2 border-gray-100 rounded-xl px-4 py-2.5 outline-none text-sm font-medium text-gray-800 transition focus:border-[var(--color-primary)]"
+            style="background:#f8faff;">
+        </div>
+        <input id="addrZip" type="text" placeholder="ZIP Code" maxlength="10"
+          class="w-full border-2 border-gray-100 rounded-xl px-4 py-2.5 outline-none text-sm font-medium text-gray-800 transition focus:border-[var(--color-primary)]"
+          style="background:#f8faff;">
+      </div>
+
+    </div>
+
+    <div class="flex gap-3">
+      <button id="modalCancel"
+        class="flex-1 py-3 rounded-xl text-sm font-semibold text-gray-500 bg-gray-100 hover:bg-gray-200 transition">
+        Cancel
+      </button>
+      <button id="modalSave"
+        class="flex-1 py-3 rounded-xl text-sm font-bold text-white shadow-md transition hover:opacity-90"
+        style="background: var(--color-primary);">
+        Save
+      </button>
+    </div>
+  </div>
+  </div>
+
+  <script src="../js/account.js?v=6"></script>
+  <!-- LOGOUT CONFIRM MODAL -->
+  <div class="logout-overlay" id="logoutModal">
+    <div class="logout-box">
+      <div class="lo-icon">
+        <i class="fas fa-right-from-bracket text-red-400 text-xl"></i>
+      </div>
+      <h3>Log Out?</h3>
+      <p>Are you sure you want to log out of your account?</p>
+      <div class="logout-actions">
+        <button class="lo-cancel"
+          onclick="document.getElementById('logoutModal').classList.remove('open')">Stay</button>
+        <button class="lo-confirm" id="confirmLogoutBtn"><i class="fas fa-right-from-bracket mr-1"></i>Log Out</button>
+      </div>
+    </div>
+  </div>
+
+</body>
+
+</html>

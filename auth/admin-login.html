@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title>Admin Access Technilog</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="../stylesheet/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <script>
+    function loadScript(src) {
+      return new Promise((resolve, reject) => {
+        const existing = document.querySelector(`script[src="${src}"]`);
+        if (existing) {
+          existing.addEventListener('load', () => resolve());
+          existing.addEventListener('error', () => reject());
+          return;
+        }
+        const script = document.createElement('script');
+        script.src = src;
+        script.async = false;
+        script.onload = () => resolve();
+        script.onerror = () => reject();
+        document.head.appendChild(script);
+      });
+    }
+
+    function setFallbackQr(url) {
+      const qrCodeContainer = document.getElementById('qrCode');
+      qrCodeContainer.innerHTML = `<img src="https://chart.googleapis.com/chart?chs=200x200&cht=qr&chl=${encodeURIComponent(url)}&choe=UTF-8" alt="QR Code" style="width:200px;height:200px;" />`;
+      document.getElementById('qrLoading').style.display = 'none';
+      document.getElementById('manualUrl').textContent = `If scanning does not work, open this URL on your phone: ${url}`;
+    }
+
+    function isLocalHost(hostname) {
+      return ['localhost', '127.0.0.1', '0.0.0.0'].includes(hostname);
+    }
+
+    function discoverLocalIpAddress(timeout = 3000) {
+      return new Promise((resolve) => {
+        const ips = new Set();
+        const pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
+        pc.createDataChannel('');
+        pc.onicecandidate = (event) => {
+          if (!event.candidate) {
+            pc.close();
+            const localIp = [...ips].find(ip => ip && !ip.startsWith('127.') && !ip.startsWith('169.254.') && !ip.startsWith('0.')) || null;
+            resolve(localIp);
+            return;
+          }
+          const parts = event.candidate.candidate.split(' ');
+          const ip = parts[4];
+          if (ip) ips.add(ip);
+        };
+        pc.createOffer().then(offer => pc.setLocalDescription(offer)).catch(() => {
+          pc.close();
+          resolve(null);
+        });
+        setTimeout(() => {
+          if (pc.signalingState !== 'closed') {
+            pc.close();
+            const localIp = [...ips].find(ip => ip && !ip.startsWith('127.') && !ip.startsWith('169.254.') && !ip.startsWith('0.')) || null;
+            resolve(localIp);
+          }
+        }, timeout);
+      });
+    }
+
+    function buildVerificationUrl(sessionToken, hostOverride = null) {
+      const url = new URL(`admin-verify.php?session=${encodeURIComponent(sessionToken)}`, window.location.href);
+      if (hostOverride) {
+        url.hostname = hostOverride;
+      }
+      return url.href;
+    }
+
+    async function initQr() {
+      const qrCodeContainer = document.getElementById('qrCode');
+      const qrLoading = document.getElementById('qrLoading');
+      const manualUrl = document.getElementById('manualUrl');
+
+      const sessionToken = Date.now() + Math.random().toString(36).substr(2, 9);
+      let verificationUrl = buildVerificationUrl(sessionToken);
+
+      if (isLocalHost(window.location.hostname)) {
+        const localIp = await discoverLocalIpAddress();
+        if (localIp) {
+          verificationUrl = buildVerificationUrl(sessionToken, localIp);
+        }
+      }
+
+      const libraries = ['./qrcode.min.js', './qrcodejs.min.js', 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js'];
+      let loaded = false;
+
+      for (const lib of libraries) {
+        try {
+          await loadScript(lib);
+          if (window.QRCode) {
+            new QRCode(qrCodeContainer, {
+              text: verificationUrl,
+              width: 200,
+              height: 200,
+              colorDark: '#2E279D',
+              colorLight: '#FFFFFF'
+            });
+            loaded = true;
+            break;
+          }
+        } catch (error) {
+          console.warn('Failed to load QR library:', lib, error);
+        }
+      }
+
+      if (!loaded) {
+        console.error('All QR library loading attempts failed');
+        qrLoading.textContent = 'QR library failed to load. Using fallback image.';
+        setFallbackQr(verificationUrl);
+      } else {
+        qrLoading.style.display = 'none';
+      }
+
+      localStorage.setItem('admin_session_token', sessionToken);
+      pollVerificationStatus(sessionToken);
+    }
+
+    function pollVerificationStatus(sessionToken) {
+      const checkInterval = setInterval(async () => {
+        try {
+          const response = await fetch(`admin-verify.php?action=check&session=${sessionToken}`);
+          const data = await response.json();
+
+          if (data.verified) {
+            clearInterval(checkInterval);
+            showMessage('Admin access granted! Redirecting...', 'success');
+            localStorage.setItem('admin_logged_in', 'true');
+            localStorage.setItem('admin_login_time', new Date().toISOString());
+            setTimeout(() => {
+              window.location.href = '../frontend/admin.html';
+            }, 1500);
+          }
+        } catch (error) {
+          console.error('Polling error:', error);
+        }
+      }, 2000);
+
+      setTimeout(() => clearInterval(checkInterval), 300000);
+    }
+
+    async function submitAdminCode(sessionToken, code) {
+      try {
+        const formData = new FormData();
+        formData.append('admin_code', code);
+
+        const response = await fetch(`admin-verify.php?session=${encodeURIComponent(sessionToken)}`, {
+          method: 'POST',
+          body: formData
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          showMessage(data.message, 'success');
+          localStorage.setItem('admin_logged_in', 'true');
+          localStorage.setItem('admin_login_time', new Date().toISOString());
+          setTimeout(() => {
+            window.location.href = '../frontend/admin.html';
+          }, 1200);
+        } else {
+          showMessage(data.message, 'error');
+        }
+      } catch (error) {
+        console.error('Admin code submit error:', error);
+        showMessage('Unable to verify admin code. Please try again.', 'error');
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      initQr();
+      const adminCodeForm = document.getElementById('adminCodeForm');
+      const adminCodeInput = document.getElementById('adminCodeInput');
+
+      adminCodeForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const sessionToken = localStorage.getItem('admin_session_token');
+        if (!sessionToken) {
+          showMessage('Session token missing. Reload the page and try again.', 'error');
+          return;
+        }
+        await submitAdminCode(sessionToken, adminCodeInput.value.trim());
+      });
+    });
+
+    function showMessage(message, type) {
+      const msgBox = document.getElementById('msgBox');
+      msgBox.textContent = message;
+      msgBox.className = `text-center text-sm mb-3 py-2 px-3 rounded-lg ${type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+        }`;
+      msgBox.classList.remove('hidden');
+    }
+  </script>
+</head>
+
+<body>
+  <div class="page-wrapper min-h-screen flex items-center justify-center bg-gray-50">
+    <div class="w-full max-w-md mx-4 p-8 rounded-2xl shadow-xl text-white"
+      style="background-color: var(--color-secondary);">
+
+      <!-- LOGO -->
+      <div class="flex flex-col items-center mb-7">
+        <img src="../image/logo.png" class="h-20 w-20 rounded-full mb-3 shadow-lg" alt="Logo"
+          onerror="this.style.display='none'">
+        <h1 class="text-3xl font-bold tracking-wide">TECHNILOG</h1>
+        <p class="text-sm mt-1 text-white/70">Admin Access</p>
+      </div>
+
+      <!-- LABEL -->
+      <p class="text-center text-sm text-white/80 mb-4">
+        Scan the QR code below to verify your identity
+      </p>
+
+      <!-- QR CODE BOX -->
+      <div class="flex items-center justify-center mb-6">
+        <div class="bg-white rounded-2xl shadow-inner flex items-center justify-center"
+          style="width: 220px; height: 220px;">
+          <div id="qrCode" class="qr-code"></div>
+          <div id="qrLoading" class="text-gray-500 text-sm">Generating QR...</div>
+        </div>
+      </div>
+
+      <!-- ADMIN CODE ENTRY -->
+      <div class="mt-6 px-4 py-4 bg-white/10 rounded-2xl">
+        <p class="text-center text-sm text-white/80 mb-3">Or enter the admin code directly below:</p>
+        <form id="adminCodeForm" class="space-y-3">
+          <input type="password" id="adminCodeInput" name="admin_code" placeholder="Enter admin code"
+            class="w-full px-4 py-3 rounded-xl border border-white/30 bg-white/10 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+            required>
+          <button type="submit"
+            class="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 rounded-xl transition duration-200">
+            Submit Admin Code
+          </button>
+        </form>
+      </div>
+
+      <!-- STATUS MESSAGE -->
+      <div id="msgBox" class="hidden text-center text-sm mb-3 py-2 px-3 rounded-lg"></div>
+
+      <!-- BACK TO HOME -->
+      <p class="text-center mt-2">
+        <button id="backBtn" class="text-white/60 hover:text-white transition text-sm" onclick="history.back()">
+          <i class="fas fa-arrow-left mr-1"></i>Back
+        </button>
+      </p>
+
+      <div class="text-center text-xs mt-6 text-white/40">© 2026 TECHNILOG. All rights reserved.</div>
+    </div>
+  </div>
+</body>
+
+</html>

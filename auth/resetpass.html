@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="eng">
+<head>
+  <title>Reset Password Technilog</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="../stylesheet/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+<body class="bg-white">
+<div class="min-h-screen flex items-center justify-center">
+  <div class="w-full max-w-md p-8 rounded-xl shadow-lg text-white" style="background-color: var(--color-secondary);">
+
+    <!-- LOGO -->
+    <div class="flex flex-col items-center mb-6">
+      <img src="../image/logo.png" class="h-20 w-20 rounded-full mb-3" alt="Logo" onerror="this.style.display='none'">
+      <h1 class="text-3xl font-bold tracking-wide">TECHNILOG</h1>
+      <p class="text-sm mt-2 text-white/70">Enter the code sent to your email</p>
+      <p id="emailDisplay" class="text-sm font-semibold mt-1 text-white"></p>
+    </div>
+
+    <!-- MESSAGE -->
+    <div id="msgBox" class="hidden mb-4 py-2 px-3 rounded-lg text-center text-sm"></div>
+
+    <!-- ── STEP 1: CODE ENTRY ── -->
+    <div id="stepCode">
+      <!-- 6-DIGIT BOXES -->
+      <div class="flex justify-center gap-2 mb-6">
+        <input class="code-box" type="text" maxlength="1" inputmode="numeric">
+        <input class="code-box" type="text" maxlength="1" inputmode="numeric">
+        <input class="code-box" type="text" maxlength="1" inputmode="numeric">
+        <input class="code-box" type="text" maxlength="1" inputmode="numeric">
+        <input class="code-box" type="text" maxlength="1" inputmode="numeric">
+        <input class="code-box" type="text" maxlength="1" inputmode="numeric">
+      </div>
+
+      <button id="verifyCodeBtn"
+        class="w-full py-2 rounded-lg font-semibold bg-white text-black hover:bg-gray-200 transition mb-4">
+        Verify Code
+      </button>
+
+      <!-- RESEND -->
+      <p class="text-center text-sm text-white/70">
+        Didn't get it?
+        <button id="resendBtn" class="font-semibold text-white hover:underline ml-1">Resend Code</button>
+      </p>
+      <p id="cooldownTxt" class="text-center text-xs text-white/40 mt-1 hidden"></p>
+    </div>
+
+    <!-- ── STEP 2: NEW PASSWORD (hidden until code verified) ── -->
+    <div id="stepPassword" class="hidden">
+      <p class="text-center text-sm text-white/70 mb-5">Code verified! Now set your new password.</p>
+
+      <!-- NEW PASSWORD -->
+      <div class="mb-4 relative">
+        <label class="block text-sm mb-1 text-white/80">New Password</label>
+        <input type="password" id="new_password" placeholder="Enter new password"
+          class="w-full px-4 pr-10 py-2 rounded-lg text-black outline-none focus:ring-2 focus:ring-white/40">
+        <i id="toggleNewPassword"
+          class="fa-solid fa-eye absolute right-3 top-[38px] text-black cursor-pointer"></i>
+      </div>
+
+      <!-- CONFIRM PASSWORD -->
+      <div class="mb-6 relative">
+        <label class="block text-sm mb-1 text-white/80">Confirm Password</label>
+        <input type="password" id="confirm_password" placeholder="Confirm new password"
+          class="w-full px-4 pr-10 py-2 rounded-lg text-black outline-none focus:ring-2 focus:ring-white/40">
+        <i id="toggleConfirmPassword"
+          class="fa-solid fa-eye absolute right-3 top-[38px] text-black cursor-pointer"></i>
+      </div>
+
+      <button id="resetBtn"
+        class="w-full py-2 rounded-lg font-semibold bg-white text-black hover:bg-gray-200 transition">
+        Reset Password
+      </button>
+    </div>
+
+    <!-- LOGIN LINK -->
+    <p class="text-center text-sm mt-5 text-white/70">
+      Remember your password?
+      <a href="login.html" class="font-semibold text-white hover:underline">Log In</a>
+    </p>
+
+    <div class="text-center text-xs mt-6 text-white/40">© 2026 TECHNILOG. All rights reserved.</div>
+  </div>
+</div>
+
+<script src="../js/resetPass.js"></script>
+</body>
+</html>

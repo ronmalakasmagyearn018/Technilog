@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="eng">
+<head>
+  <title>Sign Up Technilog</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="../stylesheet/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+</head>
+
+<body>
+<div class="min-h-screen flex items-center justify-center bg-white">
+<div class="w-full max-w-md p-8 rounded-xl shadow-lg text-white" style="background-color: var(--color-secondary);">
+
+  <!-- LOGO -->
+  <div class="flex flex-col items-center mb-6">
+    <img src="../image/logo.png" class="h-20 w-20 rounded-full mb-3" alt="Logo">
+    <h1 class="text-3xl font-bold tracking-wide">TECHNILOG</h1>
+    <p class="text-sm mt-1">Create your account</p>
+  </div>
+
+  <!-- ERROR MESSAGE -->
+  <div id="msgBox" class="hidden mb-4 py-2 px-3 rounded-lg text-center text-sm"></div>
+
+  <!-- USERNAME -->
+  <div class="mb-4">
+    <label class="block text-sm mb-1">Username</label>
+    <input id="username" type="text" placeholder="Enter your username"
+      class="w-full px-4 py-2 rounded-lg text-black outline-none" required>
+  </div>
+
+  <!-- EMAIL -->
+  <div class="mb-4">
+    <label class="block text-sm mb-1">Email</label>
+    <input id="email" type="email" placeholder="Enter your email"
+      class="w-full px-4 py-2 rounded-lg text-black outline-none" required>
+  </div>
+
+  <!-- PASSWORD -->
+  <div class="mb-4 relative">
+    <label class="block text-sm mb-1">Password</label>
+    <input type="password" id="password" placeholder="Create a password"
+      class="w-full px-4 pr-10 py-2 rounded-lg text-black outline-none" required>
+    <i id="togglePassword" class="fa-solid fa-eye absolute right-3 top-[38px] text-black cursor-pointer"></i>
+  </div>
+
+  <!-- CONFIRM PASSWORD -->
+  <div class="mb-6 relative">
+    <label class="block text-sm mb-1">Confirm Password</label>
+    <input type="password" id="confirm_password" placeholder="Confirm password"
+      class="w-full px-4 pr-10 py-2 rounded-lg text-black outline-none" required>
+    <i id="toggleConfirmPassword" class="fa-solid fa-eye absolute right-3 top-[38px] text-black cursor-pointer"></i>
+  </div>
+
+  <!-- SIGN UP BUTTON -->
+  <button id="signupBtn"
+    class="w-full py-2 rounded-lg font-semibold bg-white text-black hover:bg-gray-200 transition">
+    Sign Up
+  </button>
+
+  <!-- LOGIN LINK -->
+  <p class="text-center text-sm mt-4">
+    Already have an account?
+    <a href="login.html" class="font-semibold hover:underline">Log In</a>
+  </p>
+
+  <div class="text-center text-xs mt-6 opacity-80">© 2026 TECHNILOG. All rights reserved.</div>
+</div>
+</div>
+
+<script src="js/viewPass.js"></script>
+<script src="../js/signup.js"></script>
+</body>
+</html>

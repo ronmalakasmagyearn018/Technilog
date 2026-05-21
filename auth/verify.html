@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="eng">
+
+<head>
+  <title>Verify Email Technilog</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="../stylesheet/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+</head>
+
+<body>
+  <div class="min-h-screen flex items-center justify-center bg-white">
+    <div class="w-full max-w-md p-8 rounded-xl shadow-lg text-white" style="background-color: var(--color-secondary);">
+
+      <!-- LOGO -->
+      <div class="flex flex-col items-center mb-6">
+        <img src="../image/logo.png" class="h-20 w-20 rounded-full mb-3" alt="Logo">
+        <h1 class="text-3xl font-bold tracking-wide">TECHNILOG</h1>
+        <p class="text-sm mt-2 text-white/70">Check your email for the 6-digit code</p>
+        <p id="emailDisplay" class="text-sm font-semibold mt-1"></p>
+      </div>
+
+      <!-- STATUS MESSAGE -->
+      <div id="msgBox" class="hidden mb-4 py-2 px-3 rounded-lg text-center text-sm"></div>
+
+      <!-- 6-DIGIT CODE BOXES -->
+      <div class="flex justify-center gap-2 mb-6">
+        <input class="code-box" type="text" maxlength="1" inputmode="numeric">
+        <input class="code-box" type="text" maxlength="1" inputmode="numeric">
+        <input class="code-box" type="text" maxlength="1" inputmode="numeric">
+        <input class="code-box" type="text" maxlength="1" inputmode="numeric">
+        <input class="code-box" type="text" maxlength="1" inputmode="numeric">
+        <input class="code-box" type="text" maxlength="1" inputmode="numeric">
+      </div>
+
+      <!-- VERIFY BUTTON -->
+      <button id="verifyBtn"
+        class="w-full py-2 rounded-lg font-semibold bg-white text-black hover:bg-gray-200 transition mb-4">
+        Verify Email
+      </button>
+
+      <!-- RESEND -->
+      <p class="text-center text-sm text-white/70">
+        Didn't get it?
+        <button id="resendBtn" class="font-semibold text-white hover:underline ml-1">Resend Code</button>
+      </p>
+      <p id="cooldownTxt" class="text-center text-xs text-white/40 mt-1 hidden"></p>
+
+      <div class="text-center text-xs mt-6 opacity-60">© 2026 TECHNILOG. All rights reserved.</div>
+    </div>
+  </div>
+
+  <script src="../js/verify.js"></script>
+</body>
+
+</html>

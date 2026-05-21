@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="eng">
+<head>
+  <title>Checkout Technilog</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="../stylesheet/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <style>
+    body { background:#f8f9fb; }
+    .card { background:#fff; border-radius:16px; box-shadow:0 2px 10px rgba(0,0,0,0.06); padding:1.5rem; margin-bottom:1rem; }
+    .section-title { font-weight:700; font-size:1rem; color:#1f2937; margin-bottom:1rem; display:flex; align-items:center; gap:8px; }
+    .section-title i { color:var(--color-secondary); }
+
+    /* Form inputs */
+    .form-label { font-size:0.82rem; font-weight:600; color:#374151; margin-bottom:4px; display:block; }
+    .form-input { width:100%; padding:0.55rem 0.8rem; border:1.5px solid #d1d5db; border-radius:10px; font-size:0.92rem; outline:none; transition:border-color 0.2s; background:#f9fafb; }
+    .form-input:focus { border-color:var(--color-secondary); background:#fff; }
+
+    /* Payment options */
+    .pay-option { display:flex; align-items:center; gap:12px; padding:12px 16px; border:2px solid #e5e7eb; border-radius:12px; cursor:pointer; transition:all 0.2s; }
+    .pay-option:hover { border-color:var(--color-secondary); }
+    .pay-option.selected { border-color:var(--color-primary); background:#eff6ff; }
+    .pay-option input { accent-color:var(--color-primary); width:18px; height:18px; }
+
+    /* GCash dropdown */
+    #gcashDropdown { display:none; margin-top:12px; border:2px solid #3b82f6; border-radius:14px; background:linear-gradient(135deg,#eff6ff,#dbeafe); padding:16px; animation:fadeIn 0.2s ease; }
+    @keyframes fadeIn { from{opacity:0;transform:translateY(-6px)} to{opacity:1;transform:translateY(0)} }
+    .gcash-header { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+    .gcash-badge { background:#1d4ed8; color:#fff; font-size:0.7rem; font-weight:800; padding:3px 10px; border-radius:999px; letter-spacing:0.05em; }
+    .gcash-info-row { display:flex; justify-content:space-between; align-items:center; padding:7px 0; border-bottom:1px solid #bfdbfe; font-size:0.88rem; }
+    .gcash-info-row:last-of-type { border:none; }
+    .gcash-info-label { color:#1e40af; font-weight:600; }
+    .gcash-info-val { color:#1d4ed8; font-weight:800; letter-spacing:0.03em; }
+    .gcash-ref-input { width:100%; margin-top:12px; padding:10px 14px; border:2px solid #93c5fd; border-radius:10px; font-size:0.9rem; font-weight:600; outline:none; background:#fff; color:#1e3a8a; transition:border-color 0.2s; }
+    .gcash-ref-input:focus { border-color:#2563eb; }
+    .gcash-note { font-size:0.75rem; color:#3b82f6; margin-top:8px; display:flex; align-items:center; gap:5px; }
+    .gcash-add-btn { width:100%; margin-top:12px; padding:11px 16px; background:#1d4ed8; color:#fff; border:none; border-radius:10px; font-size:0.88rem; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; transition:all 0.2s; }
+    .gcash-add-btn:hover { background:#1e40af; }
+    .gcash-linked-account { display:none; margin-top:12px; background:#fff; border:2px solid #22c55e; border-radius:12px; padding:12px 16px; }
+    .gcash-linked-account.show { display:flex; align-items:center; gap:12px; }
+    .gcash-linked-avatar { width:38px; height:38px; border-radius:50%; background:#1d4ed8; color:#fff; display:flex; align-items:center; justify-content:center; font-size:1rem; font-weight:800; flex-shrink:0; }
+    .gcash-linked-info { flex:1; min-width:0; }
+    .gcash-linked-name { font-size:0.88rem; font-weight:800; color:#1e3a8a; }
+    .gcash-linked-email { font-size:0.75rem; color:#6b7280; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .gcash-linked-badge { font-size:0.7rem; font-weight:800; color:#16a34a; display:flex; align-items:center; gap:4px; white-space:nowrap; }
+
+    /* Cart item rows */
+    .order-item { display:flex; gap:12px; padding:10px 0; border-bottom:1px solid #f3f4f6; }
+    .order-item:last-child { border:none; }
+    .order-item img { width:60px; height:60px; border-radius:10px; object-fit:cover; background:#e5e7eb; flex-shrink:0; }
+    .order-item-img-placeholder { width:60px; height:60px; border-radius:10px; background:#f3f4f6; display:flex; align-items:center; justify-content:center; color:#9ca3af; flex-shrink:0; }
+
+    /* Summary row */
+    .sum-row { display:flex; justify-content:space-between; font-size:0.9rem; color:#6b7280; margin-bottom:6px; }
+    .sum-row.total { font-weight:700; font-size:1.05rem; color:#1f2937; border-top:1px solid #e5e7eb; padding-top:10px; margin-top:6px; }
+
+    /* Place order btn */
+    .btn-place { width:100%; padding:14px; background:var(--color-primary); color:#fff; border:none; border-radius:12px; font-size:1rem; font-weight:700; cursor:pointer; transition:opacity 0.2s; }
+    .btn-place:hover { opacity:0.88; }
+
+    /* Qty stepper */
+    .qty-stepper { display:flex; align-items:center; gap:6px; margin-top:5px; }
+    .qty-btn { width:24px; height:24px; border-radius:6px; border:1.5px solid #d1d5db; background:#f9fafb; color:#374151; font-size:0.95rem; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.15s; line-height:1; }
+    .qty-btn:hover { border-color:var(--color-primary); color:var(--color-primary); background:#eff6ff; }
+    .qty-btn:disabled { opacity:0.35; cursor:not-allowed; }
+    .qty-num { font-size:0.85rem; font-weight:700; color:#1f2937; min-width:20px; text-align:center; }
+    .remove-item { font-size:0.7rem; color:#ef4444; cursor:pointer; margin-left:2px; background:none; border:none; padding:0; display:flex; align-items:center; gap:3px; }
+    .remove-item:hover { text-decoration:underline; }
+
+    /* Confirm modal */
+    .confirm-overlay { display:none; position:fixed; inset:0; z-index:9998; background:rgba(0,0,0,0.5); align-items:center; justify-content:center; backdrop-filter:blur(2px); }
+    .confirm-overlay.open { display:flex; }
+    .confirm-box { background:#fff; border-radius:20px; padding:2rem 1.75rem; max-width:360px; width:90%; text-align:center; box-shadow:0 16px 48px rgba(0,0,0,.2); animation:popIn 0.25s ease; }
+    .confirm-icon-wrap { width:64px; height:64px; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 1rem; }
+    .confirm-title { font-size:1.1rem; font-weight:800; color:#1f2937; margin-bottom:0.4rem; }
+    .confirm-sub { font-size:0.85rem; color:#6b7280; margin-bottom:1.5rem; line-height:1.5; }
+    .confirm-actions { display:flex; gap:10px; }
+    .confirm-actions button { flex:1; padding:12px; border-radius:12px; font-size:0.88rem; font-weight:700; border:none; cursor:pointer; transition:all 0.2s; }
+    .confirm-cancel-btn { background:#f3f4f6; color:#6b7280; }
+    .confirm-cancel-btn:hover { background:#e5e7eb; }
+    .confirm-ok-btn { color:#fff; }
+
+    /* Success overlay */
+    #successOverlay { display:none; position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,0.55); align-items:center; justify-content:center; }
+    #successOverlay.show { display:flex; }
+    .success-card { background:#fff; border-radius:20px; padding:2.5rem; max-width:400px; width:90%; text-align:center; animation:popIn 0.4s cubic-bezier(.4,0,.2,1); }
+    @keyframes popIn { from { transform:scale(0.8); opacity:0; } to { transform:scale(1); opacity:1; } }
+  </style>
+</head>
+<body>
+<div class="h-[56px] md:h-[64px]"></div>
+
+<!-- PLACE ORDER CONFIRM MODAL -->
+<div class="confirm-overlay" id="placeOrderModal">
+  <div class="confirm-box">
+    <div class="confirm-icon-wrap" style="background:#eff6ff;">
+      <i class="fas fa-cart-shopping text-2xl" style="color:var(--color-primary);"></i>
+    </div>
+    <div class="confirm-title">Confirm Your Order</div>
+    <div class="confirm-sub">Are you sure you want to place this order? Please make sure all details are correct before proceeding.</div>
+    <div class="confirm-actions">
+      <button class="confirm-cancel-btn" onclick="closePlaceOrderModal()">Review Again</button>
+      <button class="confirm-ok-btn" id="confirmPlaceBtn" style="background:var(--color-primary);" onclick="confirmPlaceOrder()">
+        <i class="fas fa-check-circle mr-1"></i> Yes, Place Order
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- HEADER -->
+<header class="fixed top-0 left-0 w-full z-50 shadow-md" style="background-color:var(--color-primary);">
+  <div class="max-w-6xl mx-auto flex items-center h-[56px] px-3 md:px-4 gap-2 md:gap-4">
+    <a href="main.html" class="flex items-center gap-2">
+      <img src="../image/logo.png" alt="Logo" class="h-10 rounded-full">
+      <span class="text-white font-bold text-lg tracking-wide">TECHNILOG</span>
+    </a>
+    <div class="mx-3 h-6 w-px bg-white/30"></div>
+    <span class="text-white font-semibold text-lg">Checkout</span>
+    <a href="main.html" class="ml-auto text-white/80 hover:text-white text-sm transition"><i class="fas fa-arrow-left mr-1"></i>Continue Shopping</a>
+  </div>
+</header>
+
+<div class="max-w-6xl mx-auto px-4 py-6">
+  <div class="flex flex-col lg:flex-row gap-6">
+
+    <!-- LEFT COLUMN -->
+    <div class="flex-1">
+
+      <!-- DELIVERY ADDRESS -->
+      <div class="card">
+        <div class="section-title" style="justify-content:space-between;">
+          <span><i class="fas fa-map-marker-alt"></i> Delivery Address</span>
+          <a href="#" id="saveAddrBtn" onclick="saveAddress(event)" style="font-size:0.78rem;font-weight:600;color:var(--color-secondary);display:flex;align-items:center;gap:5px;text-decoration:none;">
+            <i class="fas fa-floppy-disk"></i> Save Address
+          </a>
+        </div>
+
+        <!-- Saved address container -->
+        <div id="savedAddrBox" style="display:none;background:#f8faff;border:1.5px solid #dbeafe;border-radius:12px;padding:12px 14px;margin-bottom:14px;">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">
+            <div>
+              <div style="font-size:0.82rem;font-weight:700;color:#1e3a5f;margin-bottom:2px;display:flex;align-items:center;gap:6px;">
+                <i class="fas fa-location-dot" style="color:var(--color-secondary);"></i>
+                <span id="savedAddrName"></span>
+                <span style="font-weight:400;color:#6b7280;font-size:0.75rem;" id="savedAddrPhone"></span>
+              </div>
+              <div style="font-size:0.8rem;color:#374151;line-height:1.5;" id="savedAddrText"></div>
+            </div>
+            <a href="#" onclick="editAddress(event)" style="font-size:0.75rem;font-weight:600;color:var(--color-secondary);white-space:nowrap;text-decoration:none;display:flex;align-items:center;gap:4px;margin-top:2px;">
+              <i class="fas fa-pen"></i> Edit
+            </a>
+          </div>
+        </div>
+
+        <!-- Address form -->
+        <div id="addrForm">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+          <div>
+            <label class="form-label">Full Name *</label>
+            <input class="form-input" id="addrName" type="text" placeholder="Juan dela Cruz">
+          </div>
+          <div>
+            <label class="form-label">Phone Number *</label>
+            <input class="form-input" id="addrPhone" type="tel" placeholder="09XX XXX XXXX">
+          </div>
+        </div>
+        <div class="mb-4">
+          <label class="form-label">Street Address / House No. *</label>
+          <input class="form-input" id="addrStreet" type="text" placeholder="Block 1 Lot 2, Sampaguita St.">
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+          <div>
+            <label class="form-label">Barangay *</label>
+            <input class="form-input" id="addrBarangay" type="text" placeholder="Brgy. Santo Niño">
+          </div>
+          <div>
+            <label class="form-label">City / Municipality *</label>
+            <input class="form-input" id="addrCity" type="text" placeholder="Morong">
+          </div>
+          <div>
+            <label class="form-label">Province *</label>
+            <input class="form-input" id="addrProvince" type="text" placeholder="Rizal">
+          </div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="form-label">ZIP Code</label>
+            <input class="form-input" id="addrZip" type="text" placeholder="1960">
+          </div>
+          <div>
+            <label class="form-label">Order Notes (optional)</label>
+            <input class="form-input" id="orderNotes" type="text" placeholder="Leave at door, call upon arrival…">
+          </div>
+        </div>
+        </div><!-- end addrForm -->
+      </div>
+
+      <!-- PAYMENT METHOD -->
+      <div class="card">
+        <div class="section-title"><i class="fas fa-credit-card"></i> Payment Method</div>
+        <div class="flex flex-col gap-3">
+          <label class="pay-option selected" onclick="selectPay(this)">
+            <input type="radio" name="payment" value="cod" checked>
+            <i class="fas fa-money-bill-wave text-green-500 text-xl"></i>
+            <div>
+              <div class="font-semibold text-gray-800">Cash on Delivery</div>
+              <div class="text-xs text-gray-500">Pay when your order arrives</div>
+            </div>
+          </label>
+          <label class="pay-option" onclick="selectPay(this)">
+            <input type="radio" name="payment" value="gcash">
+            <i class="fas fa-mobile-alt text-blue-500 text-xl"></i>
+            <div>
+              <div class="font-semibold text-gray-800">GCash</div>
+              <div class="text-xs text-gray-500">Pay via GCash mobile wallet</div>
+            </div>
+          </label>
+
+          <!-- GCash Payment Dropdown -->
+          <div id="gcashDropdown">
+            <div class="gcash-header">
+              <i class="fas fa-mobile-alt text-blue-500 text-lg"></i>
+              <span class="font-bold text-blue-800 text-sm">GCash Payment Details</span>
+              <span class="gcash-badge">GCASH</span>
+            </div>
+            <div class="gcash-info-row">
+              <span class="gcash-info-label"><i class="fas fa-phone mr-1"></i>GCash Number</span>
+              <span class="gcash-info-val">0993-453-4048</span>
+            </div>
+            <div class="gcash-info-row">
+              <span class="gcash-info-label"><i class="fas fa-user mr-1"></i>Account Name</span>
+              <span class="gcash-info-val">TECHNILOG STORE</span>
+            </div>
+            <div class="gcash-info-row">
+              <span class="gcash-info-label"><i class="fas fa-peso-sign mr-1"></i>Amount to Pay</span>
+              <span class="gcash-info-val" id="gcashAmount">₱0.00</span>
+            </div>
+            <button class="gcash-add-btn" id="gcashAddBtn" onclick="linkGcashAccount()">
+              <i class="fas fa-plus-circle"></i> Add GCash Account
+            </button>
+            <div class="gcash-linked-account" id="gcashLinkedAccount">
+              <div class="gcash-linked-avatar" id="gcashLinkedAvatar">?</div>
+              <div class="gcash-linked-info">
+                <div class="gcash-linked-name" id="gcashLinkedName">—</div>
+                <div class="gcash-linked-email" id="gcashLinkedEmail">—</div>
+              </div>
+              <div class="gcash-linked-badge"><i class="fas fa-circle-check"></i> Linked</div>
+            </div>
+            <div class="gcash-note" style="margin-top:10px;">
+              <i class="fas fa-circle-info"></i>
+              Send the exact amount to our GCash number and link your account above.
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- INSTALLATION SERVICE -->
+      <div class="card" id="installationCard" style="display:none;">
+        <div class="section-title"><i class="fas fa-screwdriver-wrench"></i> Installation Service</div>
+        <div class="flex flex-col gap-3">
+          <label class="pay-option selected" onclick="selectService(this)">
+            <input type="radio" name="service" value="self" checked>
+            <i class="fas fa-user text-gray-400 text-xl"></i>
+            <div>
+              <div class="font-semibold text-gray-800">Self Installation</div>
+              <div class="text-xs text-gray-500">I'll install the product myself — no extra charge</div>
+            </div>
+            <span class="ml-auto text-sm font-bold text-gray-400">FREE</span>
+          </label>
+          <label class="pay-option" onclick="selectService(this)">
+            <input type="radio" name="service" value="with_installation">
+            <i class="fas fa-screwdriver-wrench text-orange-500 text-xl"></i>
+            <div>
+              <div class="font-semibold text-gray-800">With Installation</div>
+              <div class="text-xs text-gray-500">Our technician will install it for you</div>
+            </div>
+            <span class="ml-auto text-sm font-bold" style="color:var(--color-primary);">+₱1,500.00</span>
+          </label>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT COLUMN: ORDER SUMMARY -->
+    <div class="w-full lg:w-[360px]">
+      <div class="card sticky top-20">
+        <div class="section-title"><i class="fas fa-receipt"></i> Order Summary</div>
+
+        <!-- Items -->
+        <div id="orderItems"></div>
+
+        <!-- Totals -->
+        <div class="mt-4">
+          <div class="sum-row"><span>Subtotal</span><span id="sumSubtotal">₱0.00</span></div>
+          <div class="sum-row"><span>Shipping Fee</span><span id="sumShipping">₱0.00</span></div>
+          <div class="sum-row"><span>Installation Fee</span><span id="sumInstallation">—</span></div>
+          <div class="sum-row"><span>Discount</span><span class="text-green-600">—₱0.00</span></div>
+          <div class="sum-row total"><span>Total</span><span id="sumTotal">₱0.00</span></div>
+        </div>
+
+        <!-- Shipping note -->
+        <div class="mt-3 mb-4 bg-blue-50 rounded-lg px-3 py-2 text-xs text-blue-700">
+          <i class="fas fa-truck mr-1"></i> Free shipping within Morong, Rizal. Standard rate ₱120 outside.
+        </div>
+
+        <!-- Error -->
+        <div id="checkoutError" class="hidden text-red-500 text-sm mb-3 text-center"></div>
+
+        <button class="btn-place" onclick="openPlaceOrderModal()">
+          <i class="fas fa-check-circle mr-2"></i>Place Order
+        </button>
+        <p class="text-xs text-gray-400 text-center mt-3">By placing your order you agree to our Terms & Conditions.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SUCCESS OVERLAY -->
+<div id="successOverlay">
+  <div class="success-card">
+    <div class="text-green-500 text-6xl mb-4"><i class="fas fa-check-circle"></i></div>
+    <h2 class="text-2xl font-bold text-gray-900 mb-2">Order Placed!</h2>
+    <p class="text-gray-500 mb-2">Thank you for your purchase. Your order has been received.</p>
+    <p class="text-gray-400 text-sm mb-2">Our team will contact you shortly to confirm delivery.</p>
+    <p id="successOrderRef" class="text-sm font-bold mb-5" style="color:var(--color-secondary);"></p>
+    <div class="flex gap-3">
+      <button onclick="window.location.href='deliveries.html'" class="flex-1 py-3 rounded-xl font-semibold transition hover:opacity-90" style="background:var(--color-primary);color:#fff;">
+        <i class="fas fa-truck mr-2"></i>View My Orders
+      </button>
+      <button onclick="window.location.href='main.html'" class="flex-1 py-3 rounded-xl font-semibold transition hover:opacity-90" style="background:#f3f4f6;color:#374151;">
+        Continue Shopping
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer class="mt-10 py-4 px-4 text-center text-xs text-white/80" style="background-color: var(--color-primary);">
+  © 2026 TECHNILOG. All rights reserved.
+</footer>
+
+<script>
+// ── Auth guard ──────────────────────────────────────────────────
+if (!localStorage.getItem('tl_logged_in')) { window.location.href = '../auth/login.html'; }
+
+// ── Load cart ──────────────────────────────────────────────────
+const _cuid = localStorage.getItem('tl_user_id') || 'guest';
+// Buy Now flow: item is passed directly in the URL (?buynow=...) — always fresh, no stale data
+const _buyNowParam = new URLSearchParams(location.search).get('buynow');
+const _isBuyNow    = !!_buyNowParam;
+
+let cart = _isBuyNow
+    ? [JSON.parse(decodeURIComponent(_buyNowParam))]
+    : JSON.parse(localStorage.getItem('tl_checkout_items') || localStorage.getItem('tl_cart_' + _cuid) || '[]');
+
+if (!cart.length) { window.location.href = 'main.html'; }
+
+function fmt(n) { return '₱' + parseFloat(n).toLocaleString('en-PH',{minimumFractionDigits:2}); }
+
+// ── Installation tier logic ────────────────────────────────────
+// Applies only to Smart CCTV Camera & Smart Fire Alarm products.
+// Tiers are based on TOTAL quantity of installable items in cart:
+//   1 unit      → ₱1,500
+//   2–5 units   → ₱3,000
+//   6–10 units  → ₱10,000
+//   11–20 units → ₱20,000  (max allowed)
+// Discount shown = what user saves vs paying ₱1,500 per unit individually.
+
+const INSTALL_CATEGORIES = ['smart cctv camera', 'smart fire alarm'];
+
+function isInstallableItem(item) {
+  const cat  = (item.category || '').toLowerCase().trim();
+  const name = (item.name     || '').toLowerCase().trim();
+  return INSTALL_CATEGORIES.some(c => cat.includes(c))
+    || cat.includes('smart cctv')
+    || cat.includes('fire alarm')
+    || name.includes('smart cctv')
+    || name.includes('fire alarm');
+}
+
+function getInstallableQty() {
+  return cart.filter(isInstallableItem).reduce((sum, i) => sum + (i.qty || 1), 0);
+}
+
+function calcInstallationFee(qty) {
+  if (qty <= 0)   return 0;
+  if (qty === 1)  return 1500;
+  if (qty <= 5)   return 3000;
+  if (qty <= 10)  return 10000;
+  return 20000;  // 11–20
+}
+
+function getInstallationFee() {
+  const sel = document.querySelector('input[name="service"]:checked');
+  if (!sel || sel.value !== 'with_installation') return 0;
+  return calcInstallationFee(getInstallableQty());
+}
+
+function getInstallationDiscount() {
+  const qty = getInstallableQty();
+  if (qty <= 1) return 0;            // no savings for 1 unit (that IS the base price)
+  const perUnitCost = qty * 1500;    // what they would pay at ₱1,500 each
+  const tieredCost  = calcInstallationFee(qty);
+  return Math.max(0, perUnitCost - tieredCost);
+}
+
+// Update the "With Installation" option label to show correct dynamic fee
+function refreshInstallLabel() {
+  const qty    = getInstallableQty();
+  const fee    = calcInstallationFee(qty);
+  const withEl = document.querySelector('input[value="with_installation"]');
+  if (!withEl) return;
+  const span = withEl.closest('.pay-option')?.querySelector('.ml-auto');
+  if (span) span.textContent = '+' + fmt(fee);
+}
+
+function renderOrder() {
+  const wrap = document.getElementById('orderItems');
+  if (!cart.length) { window.location.href = 'main.html'; return; }
+  wrap.innerHTML = cart.map((item, idx) => `
+    <div class="order-item" id="cartItem${idx}">
+      ${item.image
+        ? `<img src="${item.image}" alt="${item.name}">`
+        : `<div class="order-item-img-placeholder"><i class="fas fa-image"></i></div>`}
+      <div class="flex-1">
+        <div class="font-semibold text-gray-800 text-sm">${item.name}</div>
+        <div class="text-xs text-gray-400">${item.variant}</div>
+        <div class="qty-stepper">
+          <button class="qty-btn" onclick="changeQty(${idx},-1)" ${item.qty <= 1 ? 'disabled' : ''}>−</button>
+          <span class="qty-num" id="qtyNum${idx}">${item.qty}</span>
+          <button class="qty-btn" onclick="changeQty(${idx},1)">+</button>
+          <button class="remove-item" onclick="removeItem(${idx})"><i class="fas fa-trash-can"></i> Remove</button>
+        </div>
+      </div>
+      <div class="font-semibold text-sm" id="itemTotal${idx}" style="color:var(--color-primary);">${fmt(item.price * item.qty)}</div>
+    </div>`).join('');
+
+  updateTotals();
+}
+
+function changeQty(idx, delta) {
+  const MAX_INSTALLABLE = 20;
+  const item = cart[idx];
+  const newQty = item.qty + delta;
+
+  // Enforce max 20 for installable items
+  if (delta > 0 && isInstallableItem(item)) {
+    const currentTotal = getInstallableQty();
+    if (currentTotal >= MAX_INSTALLABLE) {
+      alert('Maximum quantity for installable items is 20 units.');
+      return;
+    }
+  }
+
+  item.qty = Math.max(1, newQty);
+  // Update just that item's display without full re-render
+  document.getElementById('qtyNum'   + idx).textContent = item.qty;
+  document.getElementById('itemTotal'+ idx).textContent = fmt(item.price * item.qty);
+  const minusBtn = document.querySelector(`#cartItem${idx} .qty-btn`);
+  if (minusBtn) minusBtn.disabled = item.qty <= 1;
+  // Persist updated cart
+  localStorage.setItem('tl_cart_' + _cuid, JSON.stringify(cart));
+  updateTotals();
+}
+
+function removeItem(idx) {
+  cart.splice(idx, 1);
+  localStorage.setItem('tl_cart_' + _cuid, JSON.stringify(cart));
+  if (!cart.length) { window.location.href = 'main.html'; return; }
+  renderOrder();
+}
+
+function getShippingFee() {
+  const city     = (document.getElementById('addrCity')?.value || '').trim().toLowerCase();
+  const province = (document.getElementById('addrProvince')?.value || '').trim().toLowerCase();
+
+  if (city === 'morong' && province === 'rizal') return 0;
+  if (province === 'rizal') return 120;
+  return 400;
+}
+
+function updateTotals() {
+  const subtotal     = cart.reduce((s,i) => s + i.price * i.qty, 0);
+  const shipping     = getShippingFee();
+  const installation = getInstallationFee();
+  const discount     = (installation > 0) ? getInstallationDiscount() : 0;
+  const total        = subtotal + shipping + installation;
+
+  document.getElementById('sumSubtotal').textContent     = fmt(subtotal);
+  document.getElementById('sumShipping').textContent     = shipping === 0 ? 'FREE' : fmt(shipping);
+  document.getElementById('sumInstallation').textContent = installation > 0 ? fmt(installation) : '—';
+
+  // Discount row: show savings from tiered installation pricing
+  const discountRow = document.querySelector('.sum-row .text-green-600');
+  if (discountRow) {
+    if (discount > 0) {
+      discountRow.textContent = '\u2014' + fmt(discount);
+      discountRow.closest('.sum-row').querySelector('span:first-child').textContent = 'Installation Savings';
+    } else {
+      discountRow.textContent = '\u2014\u20b10.00';
+      discountRow.closest('.sum-row').querySelector('span:first-child').textContent = 'Discount';
+    }
+  }
+
+  document.getElementById('sumTotal').textContent = fmt(total);
+  // Keep GCash amount in sync
+  const gcashAmt = document.getElementById('gcashAmount');
+  if (gcashAmt) gcashAmt.textContent = fmt(total);
+
+  // Refresh the "With Installation +₱X" label
+  refreshInstallLabel();
+}
+
+renderOrder();
+
+// ── Installation card: only show for products that need it ─────
+// Only Smart CCTV Camera and Smart Fire Alarm categories require installation.
+// Accessories, Others, and anything else — hide it entirely.
+(function checkInstallation() {
+  // Exact category match only — subcategories like 'Smart CCTV Accessories' won't trigger this
+  const NEEDS_INSTALL = ['smart cctv camera', 'smart fire alarm'];
+  const needs = cart.some(item => {
+    const cat  = (item.category || '').toLowerCase().trim();
+    const name = (item.name || '').toLowerCase().trim();
+    return NEEDS_INSTALL.includes(cat)
+      || cat.includes('smart cctv')
+      || cat.includes('fire alarm')
+      || name.includes('smart cctv')
+      || name.includes('fire alarm');
+  });
+
+  const card = document.getElementById('installationCard');
+  if (!card) return;
+
+  if (needs) {
+    card.style.display = 'block';
+  } else {
+    // Hide card and force service back to "self" so fee is always 0
+    card.style.display = 'none';
+    const selfRadio = card.querySelector('input[value="self"]');
+    if (selfRadio) selfRadio.checked = true;
+    card.querySelectorAll('.pay-option').forEach(l => l.classList.remove('selected'));
+    const selfLabel = card.querySelector('label:first-of-type');
+    if (selfLabel) selfLabel.classList.add('selected');
+    updateTotals();
+  }
+})();
+
+const _userId = localStorage.getItem('tl_user_id') || 'guest';
+const _userEmail = localStorage.getItem('tl_user_email') || '';
+
+// ── Auto-fill saved address from SERVER (works across devices/browsers) ──
+(async function autoFillAddress() {
+  if (!_userId || _userId === 'guest') return;
+  try {
+    const res  = await fetch('../backend/get_address.php?user_id=' + encodeURIComponent(_userId));
+    const data = await res.json();
+    if (data.success && data.address) {
+      showSavedAddressBox(data.address);
+    }
+  } catch (_) {}
+})();
+
+function showSavedAddressBox(saved) {
+  const addressText = saved.text || [saved.street, saved.barangay, saved.city, saved.province, saved.zip]
+    .filter(Boolean).join(', ');
+
+  document.getElementById('savedAddrName').textContent  = saved.name  || '';
+  document.getElementById('savedAddrPhone').textContent = saved.phone ? '· ' + saved.phone : '';
+  document.getElementById('savedAddrText').textContent  = addressText;
+
+  // Fill hidden inputs too so placeOrder() still works
+  const map = { addrName: saved.name, addrPhone: saved.phone, addrStreet: saved.street || saved.text,
+    addrBarangay: saved.barangay, addrCity: saved.city, addrProvince: saved.province,
+    addrZip: saved.zip, orderNotes: saved.notes };
+  Object.entries(map).forEach(([id, val]) => {
+    const el = document.getElementById(id);
+    if (el) el.value = val || '';
+  });
+
+  document.getElementById('savedAddrBox').style.display = 'block';
+  document.getElementById('addrForm').style.display     = 'none';
+  document.getElementById('saveAddrBtn').style.display  = 'none';
+  updateTotals();
+}
+
+async function saveAddress(e) {
+  e.preventDefault();
+  const addr = {
+    name:     document.getElementById('addrName').value.trim(),
+    phone:    document.getElementById('addrPhone').value.trim(),
+    street:   document.getElementById('addrStreet').value.trim(),
+    barangay: document.getElementById('addrBarangay').value.trim(),
+    city:     document.getElementById('addrCity').value.trim(),
+    province: document.getElementById('addrProvince').value.trim(),
+    zip:      document.getElementById('addrZip').value.trim(),
+    notes:    document.getElementById('orderNotes').value.trim(),
+  };
+  if (!addr.name || !addr.street || !addr.city) {
+    alert('Please fill in at least Name, Street, and City before saving.'); return;
+  }
+  // Save to server so it persists across devices and browsers
+  try {
+    await fetch('../backend/save_address.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_id: parseInt(_userId, 10), address: addr })
+    });
+  } catch (_) {}
+  showSavedAddressBox(addr);
+}
+
+function editAddress(e) {
+  e.preventDefault();
+  document.getElementById('savedAddrBox').style.display = 'none';
+  document.getElementById('addrForm').style.display     = 'block';
+  document.getElementById('saveAddrBtn').style.display  = 'flex';
+}
+
+// ── Payment selection ──────────────────────────────────────────
+function selectPay(label) {
+  document.querySelectorAll('.pay-option').forEach(l => l.classList.remove('selected'));
+  label.classList.add('selected');
+  label.querySelector('input').checked = true;
+  const isGcash = label.querySelector('input').value === 'gcash';
+  document.getElementById('gcashDropdown').style.display = isGcash ? 'block' : 'none';
+  if (isGcash) autoLinkGcashAccount();
+}
+
+// ── Service selection ──────────────────────────────────────────
+function selectService(label) {
+  document.querySelectorAll('[name="service"]').forEach(r => r.closest('.pay-option').classList.remove('selected'));
+  label.classList.add('selected');
+  label.querySelector('input').checked = true;
+  updateTotals();
+}
+
+// ── GCash Link Account ────────────────────────────────────────
+function applyGcashLink() {
+  const name    = localStorage.getItem('tl_name')       || 'User';
+  const email   = localStorage.getItem('tl_user_email') || '';
+  const initial = name.trim().charAt(0).toUpperCase()   || 'U';
+
+  document.getElementById('gcashLinkedAvatar').textContent = initial;
+  document.getElementById('gcashLinkedName').textContent   = name;
+  document.getElementById('gcashLinkedEmail').textContent  = email;
+  document.getElementById('gcashLinkedAccount').classList.add('show');
+
+  const btn = document.getElementById('gcashAddBtn');
+  btn.innerHTML        = '<i class="fas fa-check"></i> Account Linked';
+  btn.style.background = '#16a34a';
+  btn.disabled         = true;
+
+  sessionStorage.setItem('tl_gcash_linked', '1');
+  localStorage.setItem('tl_gcash_saved', '1');
+}
+
+// Called when user clicks "Add GCash Account" button
+function linkGcashAccount() {
+  applyGcashLink();
+}
+
+// Called automatically when user selects GCash radio — restores saved account
+function autoLinkGcashAccount() {
+  if (localStorage.getItem('tl_gcash_saved') === '1') {
+    applyGcashLink();
+  }
+}
+
+// ── Place Order Confirm Modal ──────────────────────────────────
+function openPlaceOrderModal() {
+  // Run all validations first before showing modal
+  const name     = document.getElementById('addrName')?.value.trim();
+  const phone    = document.getElementById('addrPhone')?.value.trim();
+  const street   = document.getElementById('addrStreet')?.value.trim();
+  const barangay = document.getElementById('addrBarangay')?.value.trim();
+  const city     = document.getElementById('addrCity')?.value.trim();
+  const province = document.getElementById('addrProvince')?.value.trim();
+  const payment  = document.querySelector('input[name="payment"]:checked')?.value || 'cod';
+  const errEl    = document.getElementById('checkoutError');
+  errEl.classList.add('hidden');
+
+  if (!name || !phone || !street || !barangay || !city || !province) {
+    errEl.textContent = 'Please fill in all required address fields.';
+    errEl.classList.remove('hidden');
+    errEl.scrollIntoView({ behavior: 'smooth' });
+    return;
+  }
+  if (payment === 'gcash' && !sessionStorage.getItem('tl_gcash_linked')) {
+    errEl.textContent = 'Please link your GCash account before placing your order.';
+    errEl.classList.remove('hidden');
+    errEl.scrollIntoView({ behavior: 'smooth' });
+    return;
+  }
+  document.getElementById('placeOrderModal').classList.add('open');
+}
+
+function closePlaceOrderModal() {
+  document.getElementById('placeOrderModal').classList.remove('open');
+}
+
+function confirmPlaceOrder() {
+  closePlaceOrderModal();
+  placeOrder();
+}
+
+// ── Place Order ────────────────────────────────────────────────
+async function placeOrder() {
+  const name     = document.getElementById('addrName').value.trim();
+  const phone    = document.getElementById('addrPhone').value.trim();
+  const street   = document.getElementById('addrStreet').value.trim();
+  const barangay = document.getElementById('addrBarangay').value.trim();
+  const city     = document.getElementById('addrCity').value.trim();
+  const province = document.getElementById('addrProvince').value.trim();
+  const zip      = document.getElementById('addrZip').value.trim();
+  const notes    = document.getElementById('orderNotes').value.trim();
+  const payment  = document.querySelector('input[name="payment"]:checked')?.value || 'cod';
+  const service  = document.querySelector('input[name="service"]:checked')?.value  || 'self';
+  const errEl    = document.getElementById('checkoutError');
+  errEl.classList.add('hidden');
+
+  if (!name || !phone || !street || !barangay || !city || !province) {
+    errEl.textContent = 'Please fill in all required address fields.';
+    errEl.classList.remove('hidden');
+    errEl.scrollIntoView({behavior:'smooth'});
+    return;
+  }
+
+  const subtotal     = cart.reduce((s,i) => s + i.price * i.qty, 0);
+  const shipping     = getShippingFee();   // use same function as the order summary display
+  const installation = getInstallationFee();
+  const address      = `${street}, ${barangay}, ${city}, ${province} ${zip}`.trim();
+  const customer_email = localStorage.getItem('tl_user_email') || '';
+  const user_id        = parseInt(localStorage.getItem('tl_user_id') || '0', 10);
+
+  // GCash validation
+  if (payment === 'gcash') {
+    if (!sessionStorage.getItem('tl_gcash_linked')) {
+      errEl.textContent = 'Please link your GCash account before placing your order.';
+      errEl.classList.remove('hidden');
+      errEl.scrollIntoView({behavior:'smooth'});
+      return;
+    }
+  }
+
+  const btn = document.querySelector('.btn-place');
+  btn.disabled = true; btn.textContent = 'Placing order…';
+
+  try {
+    const res  = await fetch('../backend/place_order.php', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({
+        user_id,
+        customer_name: name, customer_phone: phone, customer_email,
+        address, notes, payment_method: payment,
+        service, installation_fee: installation,
+        items: cart, subtotal, shipping,
+        total: subtotal + shipping + installation
+      }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      const orderId = data.order_ref || ('TL-' + Date.now());
+      const order = {
+        orderId,
+        db_order_id: data.order_id,
+        date: new Date().toISOString(), status: 'pending',
+        items: cart, address: { name, phone, street, barangay, city, province, zip },
+        notes, paymentMethod: payment, service, installation_fee: installation,
+        subtotal, shipping, total: subtotal + shipping + installation
+      };
+      const orders = JSON.parse(localStorage.getItem('tl_orders') || '[]');
+      orders.push(order);
+      localStorage.setItem('tl_orders', JSON.stringify(orders));
+
+      // Save GCash payment record to DB
+      if (payment === 'gcash') {
+        const gcashRef = localStorage.getItem('tl_user_email') || '';
+        sessionStorage.removeItem('tl_gcash_linked');
+        fetch('../backend/save_gcash_payment.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            user_id,
+            order_id: data.order_id,
+            order_ref: data.order_ref,
+            gcash_ref: gcashRef,
+            amount: subtotal + shipping + installation
+          })
+        }).catch(() => {});
+      }
+      // Only wipe the full cart if this was a normal cart checkout — not a Buy Now
+      if (!_isBuyNow) {
+        localStorage.removeItem('tl_cart_' + (localStorage.getItem('tl_user_id') || 'guest'));
+        localStorage.removeItem('tl_checkout_items');
+      }
+      const refEl = document.getElementById('successOrderRef');
+      if (refEl) refEl.textContent = 'Order Reference: ' + (data.order_ref || orderId);
+      document.getElementById('successOverlay').classList.add('show');
+    } else {
+      errEl.textContent = data.message || 'Order failed. Please try again.';
+      errEl.classList.remove('hidden');
+      btn.disabled = false; btn.innerHTML = '<i class="fas fa-check-circle mr-2"></i>Place Order';
+    }
+  } catch(e) {
+    errEl.textContent = 'Network error. Is the server running?';
+    errEl.classList.remove('hidden');
+    btn.disabled = false; btn.innerHTML = '<i class="fas fa-check-circle mr-2"></i>Place Order';
+  }
+}
+</script>
+</body>
+</html>
