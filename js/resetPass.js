@@ -136,6 +136,12 @@ document.getElementById('resetBtn').addEventListener('click', async function () 
   if (new_password.length < 8) {
     showMsg('Password must be at least 8 characters.', true); return;
   }
+  if (!/[A-Z]/.test(new_password[0])) {
+    showMsg('Password must start with an uppercase letter.', true); return;
+  }
+  if (!/[0-9]/.test(new_password)) {
+    showMsg('Password must contain at least one number.', true); return;
+  }
   if (new_password !== confirm_password) {
     showMsg('Passwords do not match.', true); return;
   }

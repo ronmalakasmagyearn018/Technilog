@@ -888,13 +888,24 @@
       </div>
     </div>
 
-    <!-- Download button -->
-    <div class="flex justify-end mt-4">
+    <!-- Export / Import buttons -->
+    <div class="flex justify-end gap-3 mt-4">
+      <!-- Import CSV -->
+      <label
+        class="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white shadow-md transition hover:opacity-90 active:scale-95 cursor-pointer"
+        style="background: linear-gradient(135deg, #0369a1, #0284c7);"
+        title="Import an Excel or CSV file to update received records">
+        <i class="fas fa-file-import"></i>
+        Import Excel
+        <input type="file" id="importCsvInput" accept=".xlsx,.xls,.csv" style="display:none" onchange="importReceivedCSV(this)">
+      </label>
+      <!-- Export Excel -->
       <button onclick="downloadMonthlyExcel()"
         class="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white shadow-md transition hover:opacity-90 active:scale-95"
-        style="background: linear-gradient(135deg, #16a34a, #15803d);">
+        style="background: linear-gradient(135deg, #16a34a, #15803d);"
+        title="Export current month records as Excel">
         <i class="fas fa-file-excel"></i>
-        Download Excel
+        Export Excel
       </button>
     </div>
 
@@ -1773,7 +1784,7 @@ function renderByMonth() {
   }
 }
 
-// ── Export to Excel ──────────────────────────────────────────────
+// ── Export Excel ─────────────────────────────────────────────────
 function downloadMonthlyExcel() {
   const MONTHS = ['January','February','March','April','May','June',
                   'July','August','September','October','November','December'];
@@ -1783,7 +1794,6 @@ function downloadMonthlyExcel() {
   const selYear  = _recYear;
   const label    = `${MONTHS[selMonth]} ${selYear}`;
 
-  // Get the currently filtered+sorted monthly data
   const q = (document.getElementById('receivedSearch')?.value || '').toLowerCase();
 
   const byMonth = allReceivedOrders.filter(o => {
@@ -1810,50 +1820,134 @@ function downloadMonthlyExcel() {
     return;
   }
 
-  // Build rows for PHP
+  // Build rows for PHP — order_ref kept for import key
   const rows = sorted.map((o, i) => {
     const items    = parseItems(o.items_json || o.items);
     const itemText = items.map(it => `${it.name}${it.qty > 1 ? ' x'+it.qty : ''}`).join(', ') || '—';
     const d        = new Date((o.updated_at || o.created_at || '').replace(' ', 'T'));
     return {
-      no:           i + 1,
-      order_ref:    o.order_ref      || '—',
-      customer:     o.customer_name  || '—',
-      email:        o.customer_email || '—',
-      phone:        o.customer_phone || '—',
-      items:        itemText,
-      subtotal:     parseFloat(o.subtotal  || 0),
-      shipping:     parseFloat(o.shipping  || 0),
-      total:        parseFloat(o.total     || 0),
-      payment:      o.payment_method || '—',
-      day:          isNaN(d) ? '—' : d.toLocaleDateString('en-PH', {weekday:'short',month:'short',day:'numeric'}),
-      received_at:  isNaN(d) ? '—' : d.toLocaleDateString('en-PH', {year:'numeric',month:'short',day:'numeric'})
-                                + ' ' + d.toLocaleTimeString('en-PH', {hour:'2-digit',minute:'2-digit'})
+      no:          i + 1,
+      order_ref:   o.order_ref       || '—',
+      customer:    o.customer_name   || '—',
+      email:       o.customer_email  || '—',
+      phone:       o.customer_phone  || '—',
+      items:       itemText,
+      subtotal:    parseFloat(o.subtotal  || 0),
+      shipping:    parseFloat(o.shipping  || 0),
+      total:       parseFloat(o.total     || 0),
+      payment:     o.payment_method  || '—',
+      day:         isNaN(d) ? '—' : d.toLocaleDateString('en-PH', {weekday:'short',month:'short',day:'numeric'}),
+      received_at: isNaN(d) ? '—' : d.toLocaleDateString('en-PH', {year:'numeric',month:'short',day:'numeric'})
+                               + ' ' + d.toLocaleTimeString('en-PH', {hour:'2-digit',minute:'2-digit'})
     };
   });
 
-  // POST to PHP export endpoint
   const form = document.createElement('form');
   form.method = 'POST';
   form.action = '../backend/export_received.php';
   form.style.display = 'none';
-
-  const addField = (name, value) => {
-    const input = document.createElement('input');
-    input.type  = 'hidden';
-    input.name  = name;
-    input.value = value;
-    form.appendChild(input);
-  };
-
-  addField('month_label', label);
-  addField('month_num',   selMonth + 1);   // 1-based for PHP
-  addField('year',        selYear);
-  addField('rows_json',   JSON.stringify(rows));
-
+  const add = (n, v) => { const i = document.createElement('input'); i.type='hidden'; i.name=n; i.value=v; form.appendChild(i); };
+  add('month_label', label);
+  add('month_num',   selMonth + 1);
+  add('year',        selYear);
+  add('rows_json',   JSON.stringify(rows));
   document.body.appendChild(form);
   form.submit();
   document.body.removeChild(form);
+}
+
+// ── Import Excel / CSV ───────────────────────────────────────────
+async function importReceivedCSV(input) {
+  const file = input.files[0];
+  if (!file) return;
+  input.value = '';
+
+  const ext = file.name.split('.').pop().toLowerCase();
+
+  // For .xlsx / .xls — send raw file to PHP which parses it server-side
+  if (ext === 'xlsx' || ext === 'xls') {
+    const confirmed = confirm(
+      `Import from "${file.name}"?\n\nThis will update matching records in Received Orders using the Order Ref column.`
+    );
+    if (!confirmed) return;
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const res  = await fetch('../backend/import_received.php', { method: 'POST', body: formData });
+      const data = await res.json();
+      if (data.success) {
+        toast(`Import done: ${data.updated} record(s) updated.`);
+        loadReceivedOrders();
+      } else {
+        toast(data.message || 'Import failed.', true);
+      }
+    } catch (err) {
+      toast('Import error: ' + err.message, true);
+    }
+    return;
+  }
+
+  // For .csv — parse client-side then POST JSON
+  const text  = await file.text();
+  const lines = text.replace(/\r\n/g,'\n').replace(/\r/g,'\n').split('\n').filter(l => l.trim());
+  if (lines.length < 2) { toast('File is empty or has no data rows.', true); return; }
+
+  const parseLine = line => {
+    const result = []; let cur = ''; let inQ = false;
+    for (let i = 0; i < line.length; i++) {
+      const c = line[i];
+      if (inQ) {
+        if (c === '"' && line[i+1] === '"') { cur += '"'; i++; }
+        else if (c === '"') inQ = false;
+        else cur += c;
+      } else {
+        if (c === '"') inQ = true;
+        else if (c === ',') { result.push(cur.trim()); cur = ''; }
+        else cur += c;
+      }
+    }
+    result.push(cur.trim());
+    return result;
+  };
+
+  const headers = parseLine(lines[0]).map(h => h.toLowerCase().replace(/\s+/g,'_'));
+  if (!headers.includes('order_ref')) {
+    toast('File is missing the required "order_ref" column.', true);
+    return;
+  }
+
+  const rows = lines.slice(1).map(l => {
+    const vals = parseLine(l);
+    const obj  = {};
+    headers.forEach((h, i) => { obj[h] = (vals[i] ?? '').replace(/^\t/, ''); }); // strip tab prefix
+    return obj;
+  }).filter(r => r.order_ref && r.order_ref !== '—');
+
+  if (!rows.length) { toast('No valid rows found in file.', true); return; }
+
+  const confirmed = confirm(
+    `Import ${rows.length} row(s) from "${file.name}"?\n\nThis will update matching records in Received Orders using the Order Ref column.`
+  );
+  if (!confirmed) return;
+
+  try {
+    const res  = await fetch('../backend/import_received.php', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ rows }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      toast(`Import done: ${data.updated} record(s) updated.`);
+      loadReceivedOrders();
+    } else {
+      toast(data.message || 'Import failed.', true);
+    }
+  } catch (err) {
+    toast('Import error: ' + err.message, true);
+  }
 }
 
 // ── Helpers ──────────────────────────────────────────────────────
